@@ -1,4 +1,4 @@
-import { CITY_MAP_BOUNDS, CITY_MAP_CENTER } from './mapTypes'
+import { CITY_MAP_BOUNDS, HYDERABAD_MAP_REGION, type MapRegion } from './mapTypes'
 import { validCoordinates } from './navigation'
 import type { Coordinates } from './types'
 
@@ -22,7 +22,7 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-export function parsePlaceResults(value: unknown): PlaceResult[] {
+export function parsePlaceResults(value: unknown, bounds: MapRegion['bounds'] = CITY_MAP_BOUNDS): PlaceResult[] {
   if (!record(value) || value.type !== 'FeatureCollection' || !Array.isArray(value.features)) {
     throw new Error('The place-search service returned an invalid result list.')
   }
@@ -36,7 +36,7 @@ export function parsePlaceResults(value: unknown): PlaceResult[] {
     if (typeof longitude !== 'number' || typeof latitude !== 'number' || !validCoordinates([longitude, latitude])) {
       throw new Error('The place-search service returned invalid coordinates.')
     }
-    const [west, south, east, north] = CITY_MAP_BOUNDS
+    const [west, south, east, north] = bounds
     if (longitude < west || longitude > east || latitude < south || latitude > north) continue
     const properties = feature.properties
     const name = text(properties.name) || [text(properties.housenumber), text(properties.street)].filter(Boolean).join(' ')
@@ -65,7 +65,7 @@ export function parsePlaceResults(value: unknown): PlaceResult[] {
   return [...results.values()]
 }
 
-export function createPlaceSearch(fetcher: typeof fetch = fetch) {
+export function createPlaceSearch(fetcher: typeof fetch = fetch, region: MapRegion = HYDERABAD_MAP_REGION) {
   const cache = new Map<string, PlaceResult[]>()
   let lastRequest = -Infinity
   return async (query: string, signal: AbortSignal): Promise<PlaceResult[]> => {
@@ -79,8 +79,8 @@ export function createPlaceSearch(fetcher: typeof fetch = fetch) {
     lastRequest = Date.now()
     const url = new URL(PLACE_SEARCH_ENDPOINT)
     url.search = new URLSearchParams({
-      q: term, bbox: CITY_MAP_BOUNDS.join(','), lon: String(CITY_MAP_CENTER[0]),
-      lat: String(CITY_MAP_CENTER[1]), limit: '8', lang: 'en',
+      q: term, bbox: region.bounds.join(','), lon: String(region.center[0]),
+      lat: String(region.center[1]), limit: '8', lang: 'en',
     }).toString()
     const response = await fetcher(url, {
       signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
@@ -89,7 +89,7 @@ export function createPlaceSearch(fetcher: typeof fetch = fetch) {
     if (!response.ok) throw new Error(response.status === 429
       ? 'The place-search service is busy. Please try again shortly.'
       : `Place search is unavailable (HTTP ${response.status}). Try again, choose a map point, or enter coordinates.`)
-    const results = parsePlaceResults(await response.json())
+    const results = parsePlaceResults(await response.json(), region.bounds)
     signal.throwIfAborted()
     if (cache.size >= 40) {
       const oldest = cache.keys().next().value

@@ -1,18 +1,19 @@
 import { useEffect, useRef } from 'react'
 import type { GeoJSONSource, Map as LibreMap } from 'maplibre-gl'
 import type { FeatureCollection, Geometry } from 'geojson'
-import type { SatelliteScene } from './mapTypes'
-import type { Coordinates, Landmark, MapView } from './types'
+import type { MapRegion, SatelliteScene } from './mapTypes'
+import type { Coordinates, MapView } from './types'
 import { validCoordinates } from './navigation'
 import {
-  addDestinationMarker, addLandmarkMarkers, readMapPalette, useGeographicMap,
+  addDestinationMarker, addLandmarkMarkers, readMapPalette, useGeographicMap, type MapLandmark,
 } from './geographicStyle'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './GeographicScene.css'
 
 export type GeographicOverviewProps = {
+  region?: MapRegion
   year: number
-  landmarks: Landmark[]
+  landmarks: MapLandmark[]
   selectedId: string | null
   destination: Coordinates | null
   view: MapView | null
@@ -74,6 +75,7 @@ export default function GeographicOverview(props: GeographicOverviewProps) {
   const latest = useRef(props)
   latest.current = props
   const { containerRef, map, error } = useGeographicMap({
+    region: props.region,
     year: props.year, layer: 'streets', satellite: props.satellite, overview: true,
     onNavigate: (coordinates) => latest.current.onNavigate(coordinates),
     onError: (message) => latest.current.onError?.(message),

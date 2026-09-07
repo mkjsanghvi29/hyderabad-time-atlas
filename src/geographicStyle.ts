@@ -3,8 +3,8 @@ import {
   AttributionControl, Map as LibreMap, Marker, NavigationControl, ScaleControl,
   type LayerSpecification, type StyleSpecification,
 } from 'maplibre-gl'
-import { CITY_MAP_BOUNDS, CITY_MAP_CENTER, OPEN_MAP_STYLE } from './mapTypes'
-import type { GeographicLayer, SatelliteScene } from './mapTypes'
+import { HYDERABAD_MAP_REGION, OPEN_MAP_STYLE } from './mapTypes'
+import type { GeographicLayer, MapRegion, SatelliteScene } from './mapTypes'
 import type { Coordinates, Landmark, MapView, TimeOfDay } from './types'
 
 export const BUILDING_ESTIMATED_HEIGHT = 6
@@ -281,8 +281,10 @@ export function motionDuration(milliseconds: number) {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : milliseconds
 }
 
+export type MapLandmark = Pick<Landmark, 'id' | 'name' | 'coordinates' | 'visibleFrom'>
+
 export function addLandmarkMarkers(map: LibreMap, options: {
-  landmarks: Landmark[]
+  landmarks: MapLandmark[]
   year: number
   selectedId: string | null
   showLabels: boolean
@@ -357,6 +359,7 @@ export function addDestinationMarker(map: LibreMap, coordinates: Coordinates) {
 }
 
 type GeographicMapOptions = {
+  region?: MapRegion
   year: number
   layer: GeographicLayer
   satellite: SatelliteScene | null
@@ -378,10 +381,11 @@ export function useGeographicMap(options: GeographicMapOptions) {
   latest.current = options
   const [loadedMap, setLoadedMap] = useState<{ map: LibreMap; key: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const rememberedView = useRef<MapView | null>(null)
+  const rememberedView = useRef<{ regionKey: string; view: MapView } | null>(null)
   const raster = usesDatedImagery(options.year, options.layer)
   const sceneKey = raster ? JSON.stringify(options.satellite) : ''
-  const mapKey = `${options.year}|${options.overview}|${raster}|${sceneKey}`
+  const regionKey = JSON.stringify(options.region ?? HYDERABAD_MAP_REGION)
+  const mapKey = `${regionKey}|${options.year}|${options.overview}|${raster}|${sceneKey}`
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -411,6 +415,7 @@ export function useGeographicMap(options: GeographicMapOptions) {
     const initialize = async () => {
       try {
         const initial = latest.current
+        const region = initial.region ?? HYDERABAD_MAP_REGION
         const palette = readMapPalette(container)
         let style: StyleSpecification
         if (raster) {
@@ -424,11 +429,11 @@ export function useGeographicMap(options: GeographicMapOptions) {
         }
         style = withReferenceTerrain(style, initial.year, initial.overview)
         if (disposed) return
-        const previous = rememberedView.current
+        const previous = rememberedView.current?.regionKey === regionKey ? rememberedView.current.view : null
         const limits = geographicCameraLimits(initial.year, initial.layer, initial.satellite, initial.overview)
         map = new LibreMap({
           container, style, attributionControl: false,
-          center: previous ? [...previous.center] : [...CITY_MAP_CENTER],
+          center: previous ? [...previous.center] : [...region.center],
           zoom: Math.min(previous?.zoom ?? (initial.overview ? 9 : 12), limits.maxZoom),
           bearing: previous?.bearing ?? 0,
           pitch: initial.overview || raster ? 0 : 48,
@@ -443,7 +448,7 @@ export function useGeographicMap(options: GeographicMapOptions) {
         canvas.dataset.era = String(initial.year)
         canvas.dataset.ready = 'false'
         canvas.dataset.terrain = style.terrain ? 'non-dated-reference' : 'none'
-        canvas.setAttribute('aria-label', `${initial.overview ? 'City overview' : 'Geographic map'}, ${initial.year}. Arrow keys pan; plus and minus zoom. Click a location to navigate.`)
+        canvas.setAttribute('aria-label', `${region.name} ${initial.overview ? 'city overview' : 'geographic map'}, ${initial.year}. Arrow keys pan; plus and minus zoom. Click a location to navigate.`)
         current.addControl(new AttributionControl({ compact: false }), 'bottom-left')
         current.addControl(new ScaleControl({ maxWidth: initial.overview ? 75 : 120, unit: 'metric' }), 'bottom-left')
         current.addControl(new NavigationControl({ showZoom: initial.overview, showCompass: !initial.overview, visualizePitch: !initial.overview }), 'top-right')
@@ -455,7 +460,7 @@ export function useGeographicMap(options: GeographicMapOptions) {
           try {
             applyMapPalette(current, readMapPalette(container))
             if (initial.overview && !previous) {
-              current.fitBounds(CITY_MAP_BOUNDS, {
+              current.fitBounds([...region.bounds], {
                 padding: { top: 20, right: 32, bottom: 38, left: 10 },
                 duration: 0,
               })
@@ -470,7 +475,7 @@ export function useGeographicMap(options: GeographicMapOptions) {
         const emitView = () => {
           if (disposed) return
           const view = readMapView(current)
-          rememberedView.current = view
+          rememberedView.current = { regionKey, view }
           canvas.dataset.cameraLongitude = String(view.center[0])
           canvas.dataset.cameraLatitude = String(view.center[1])
           canvas.dataset.cameraZoom = String(view.zoom)

@@ -1,4 +1,37 @@
-# Hyderabad Time Atlas: historical research and reconstruction record
+# The Time Atlas: historical research and reconstruction record
+
+## World-city editions
+
+London, Cairo and Giza, Tokyo, New York, Rio de Janeiro and Sydney extend the
+atlas across six inhabited continents. Each has six locally chosen chapters,
+including a modern 2025 chapter whose geographic map uses **current**, not
+frozen-2025, data. These editions have no audio assets or narration requests.
+Hyderabad retains its original eight-chapter experience and optional audio tour.
+
+The source records live beside each city's content in `src/world/cities/` and
+are exposed in the interface. Every statistic carries its own reference date,
+geographic scope and source. A municipal census, metropolitan population and
+historical estimate are not interchangeable; the interface deliberately does
+not connect them into a spurious continuous growth chart. Where an early count
+is not established, the gap is visible rather than replaced with a fabricated
+estimate.
+
+Historical water traces provide orientation, not reconstructed shorelines.
+Neighbourhood clusters and density are illustrative, not population models.
+Landmarks are period-gated symbolic miniatures, not precise architectural
+reconstructions. Demolished structures can have an end date; a surviving site
+must not imply that its present structure existed in an earlier chapter.
+The ancient Giza chapter describes the wider region before Cairo's foundation.
+Indigenous histories in New York, Rio and Sydney are not erased by treating
+colonial arrival as the beginning of human habitation.
+
+The modern renderer and overview share the same city-specific viewing region.
+These envelopes are navigation aids, not municipal boundaries. Public search
+is explicit-submit, bounded to the chosen city and cached only in memory;
+historical and offline chapters never query a present-day place directory.
+Current building footprints and heights come from OpenStreetMap-derived
+OpenFreeMap tiles. Missing height values retain the disclosed 6 m estimate;
+terrain is a non-dated Mapterhorn reference.
 
 ## Scope and evidence
 

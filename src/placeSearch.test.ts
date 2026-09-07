@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { CITY_MAP_BOUNDS } from './mapTypes'
+import { CITY_MAP_BOUNDS, type MapRegion } from './mapTypes'
 import { createPlaceSearch, parsePlaceResults } from './placeSearch'
 
 const museum = {
@@ -16,6 +16,20 @@ const signal = () => new AbortController().signal
 afterEach(() => vi.restoreAllMocks())
 
 describe('city-wide place search', () => {
+  it('isolates bounds, search bias and cached results for each city', async () => {
+    const region: MapRegion = { name: 'London', center: [-.12, 51.5], bounds: [-.6, 51.2, .4, 51.8] }
+    const londonMuseum = { ...museum, properties: { ...museum.properties, name: 'British Museum', osm_id: 1 }, geometry: { type: 'Point', coordinates: [-.1269, 51.5194] } }
+    expect(parsePlaceResults(collection([museum, londonMuseum]), region.bounds).map((entry) => entry.name)).toEqual(['British Museum'])
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => Response.json(collection([museum, londonMuseum])))
+    const searchLondon = createPlaceSearch(fetcher, region)
+    const searchHyderabad = createPlaceSearch(fetcher)
+    expect((await searchLondon('museum', signal()))[0].name).toBe('British Museum')
+    expect((await searchHyderabad('museum', signal()))[0].name).toBe('Salar Jung Museum')
+    const londonUrl = new URL(String(fetcher.mock.calls[0][0]))
+    expect(londonUrl.searchParams.get('bbox')).toBe(region.bounds.join(','))
+    expect(londonUrl.searchParams.get('lon')).toBe('-0.12')
+    expect(londonUrl.searchParams.get('lat')).toBe('51.5')
+  })
   it('keeps mapped identities, coordinates, address detail and sensible framing', () => {
     const result = parsePlaceResults(collection())[0]
     expect(result).toMatchObject({
