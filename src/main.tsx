@@ -2,6 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './theme.css'
 import './App.css'
-import AtlasRouter from './world/AtlasRouter'
+import App from './App'
 
-createRoot(document.getElementById('root')!).render(<StrictMode><AtlasRouter /></StrictMode>)
+createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>)

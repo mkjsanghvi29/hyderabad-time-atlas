@@ -1,17 +1,15 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { destinationsForYear, parseCoordinates, type Destination } from './navigation'
-import { createPlaceSearch, searchCityPlaces, type PlaceResult } from './placeSearch'
-import type { MapRegion } from './mapTypes'
+import { searchCityPlaces, type PlaceResult } from './placeSearch'
 import type { Coordinates } from './types'
 import './CityNavigator.css'
 
-export default function CityNavigator({ year, map, onNavigate, onLandmark, geographic, city }: {
+export default function CityNavigator({ year, map, onNavigate, onLandmark, geographic }: {
   year: number
   map: ReactNode
   onNavigate: (coordinates: Coordinates, label?: string, zoom?: number) => void
   onLandmark: (id: string) => void
   geographic: boolean
-  city?: { region: MapRegion; destinations: Destination[] }
 }) {
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
@@ -20,10 +18,7 @@ export default function CityNavigator({ year, map, onNavigate, onLandmark, geogr
   const request = useRef<AbortController | null>(null)
   const inputId = useId()
   const onlineSearch = geographic && year >= 2025
-  const cityName = city?.region.name ?? 'Hyderabad'
-  const example = city ? `${city.region.center[1]}, ${city.region.center[0]}` : '17.2403, 78.4294'
-  const searchPlaces = useMemo(() => city ? createPlaceSearch(fetch, city.region) : searchCityPlaces, [city?.region])
-  const destinations = city?.destinations ?? destinationsForYear(year)
+  const destinations = destinationsForYear(year)
   const matches = destinations.filter((entry) => `${entry.name} ${entry.kind}`.toLowerCase().includes(search.trim().toLowerCase()))
 
   useEffect(() => () => request.current?.abort(), [year, geographic])
@@ -41,7 +36,7 @@ export default function CityNavigator({ year, map, onNavigate, onLandmark, geogr
     if (coordinates) { onNavigate(coordinates); return }
     if (!onlineSearch) {
       if (matches.length === 1) choose(matches[0])
-      else setError(`Choose a result below, or enter latitude, longitude (for example ${example}).`)
+      else setError('Choose a result below, or enter latitude, longitude (for example 17.2403, 78.4294).')
       return
     }
     const controller = new AbortController()
@@ -49,7 +44,7 @@ export default function CityNavigator({ year, map, onNavigate, onLandmark, geogr
     setBusy(true)
     setResults(null)
     try {
-      const places = await searchPlaces(search, controller.signal)
+      const places = await searchCityPlaces(search, controller.signal)
       if (!controller.signal.aborted) setResults(places)
     } catch (failure) {
       if (!controller.signal.aborted) setError(`Could not search the map. ${failure instanceof Error ? failure.message : 'Please try again.'}`)
@@ -69,7 +64,7 @@ export default function CityNavigator({ year, map, onNavigate, onLandmark, geogr
       <form onSubmit={submit}>
         <label htmlFor={inputId}>Find a landmark, place or coordinates</label>
         <div className="navigator-search">
-          <input id={inputId} value={search} maxLength={160} autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="search" placeholder={city ? `Place name or ${example}` : onlineSearch ? 'Salar Jung Museum, Birla Mandir...' : 'Area, landmark, or 17.24, 78.43'} onChange={(event) => {
+          <input id={inputId} value={search} maxLength={160} autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="search" placeholder={onlineSearch ? 'Salar Jung Museum, Birla Mandir...' : 'Area, landmark, or 17.24, 78.43'} onChange={(event) => {
             request.current?.abort()
             request.current = null
             setSearch(event.target.value)
@@ -81,13 +76,13 @@ export default function CityNavigator({ year, map, onNavigate, onLandmark, geogr
         </div>
         {error && <p role="alert" className="navigator-error">{error}</p>}
       </form>
-      {onlineSearch && <p className="navigator-search-note">Press Go to search current landmarks, streets, parks and other mapped places across {cityName}. Only submitted text is sent to <a href="https://photon.komoot.io/" target="_blank" rel="noreferrer">Photon</a>; no search-as-you-type requests.</p>}
-      {!city && year === 1998 && <p className="navigator-era-note">Flying in 1998? Use Begumpet. The airport at Shamshabad did not open until 2008.</p>}
+      {onlineSearch && <p className="navigator-search-note">Press Go to search current landmarks, streets, parks and other mapped places across Hyderabad. Only submitted text is sent to <a href="https://photon.komoot.io/" target="_blank" rel="noreferrer">Photon</a>; no search-as-you-type requests.</p>}
+      {year === 1998 && <p className="navigator-era-note">Flying in 1998? Use Begumpet. The airport at Shamshabad did not open until 2008.</p>}
       <div className="navigator-results" aria-busy={busy}>
-        {busy && <p role="status">Searching the {cityName} map...</p>}
+        {busy && <p role="status">Searching the Hyderabad map...</p>}
         {onlineSearch && results !== null && <>
           <h3>Current map matches</h3>
-          <p role="status">{results.length ? `${results.length} mapped results. Choose a place to travel there.` : `No mapped matches in the ${cityName} area. Try a different spelling or nearby place, or choose a point on the map.`}</p>
+          <p role="status">{results.length ? `${results.length} mapped results. Choose a place to travel there.` : 'No mapped matches in the Hyderabad area. Try a different spelling or nearby place, or choose a point on the map.'}</p>
           {results.map((result) => <div className="navigator-live-result" key={result.id}>
             <button className="navigator-result" aria-label={`Travel to ${result.name}: ${result.description}`} onClick={() => onNavigate(result.coordinates, result.name, result.zoom)}>
               <span><small>{result.kind}</small><strong>{result.name}</strong><span>{result.description}</span></span><span aria-hidden="true">→</span>

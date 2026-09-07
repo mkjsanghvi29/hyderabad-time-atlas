@@ -2,12 +2,6 @@ import type { Coordinates } from './types'
 
 export type GeographicLayer = 'streets' | 'satellite'
 
-export type MapRegion = {
-  name: string
-  center: Coordinates
-  bounds: readonly [west: number, south: number, east: number, north: number]
-}
-
 export type SatelliteScene = {
   id: string
   date: string
@@ -22,5 +16,4 @@ export type SatelliteScene = {
 export const CITY_MAP_CENTER: Coordinates = [78.46, 17.40]
 // Viewing envelope, not an administrative boundary.
 export const CITY_MAP_BOUNDS: [number, number, number, number] = [78.10, 17.10, 78.90, 17.75]
-export const HYDERABAD_MAP_REGION: MapRegion = { name: 'Hyderabad', center: CITY_MAP_CENTER, bounds: CITY_MAP_BOUNDS }
 export const OPEN_MAP_STYLE = 'https://tiles.openfreemap.org/styles/bright'

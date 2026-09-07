@@ -1,51 +1,29 @@
-# The Time Atlas
+# Hyderabad Time Atlas
 
 **What if your history lesson came with a time machine?**
 
 Think **Age of Empires-style city exploration**, but the mission is to discover how
-the world's cities changed over the centuries: historical dioramas, source-linked
-stories and current geographic maps, not a combat game.
+Hyderabad has looked and changed over the centuries: a stylized historical
+reconstruction, not a combat game.
 
-Walk through Hyderabad before Charminar existed. Follow London's river, explore
-ancient Giza long before Cairo, or watch Edo become Tokyo. Cross to New York,
-Rio de Janeiro and Sydney. Then jump to the modern map and find what survived.
+Walk through Hyderabad before Charminar existed. Watch a fortified capital become a city
+of bazaars, palaces, universities and technology corridors. Then jump five centuries
+forward and find what survived.
 
 ### [Step into the time machine →](https://mkjsanghvi29.github.io/hyderabad-time-atlas/)
 
 Free to explore in your browser. No account, installation or API key. Geographic maps
 stream public map data; the illustrated atlas also works offline.
 
-## Seven cities. Six continents.
-
-Use **Explore the world** in the header to change cities. Each new city has six
-independent historical chapters, period-gated landmarks, city-life stories,
-source-linked statistics and a self-guided place trail. The modern chapter opens
-current streets, mapped building footprints and terrain; the expanded map lets you
-search or navigate beyond the curated landmarks.
-
-| City | A different urban story |
-| --- | --- |
-| [Hyderabad](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=hyderabad) | Fortified capital, planned city, technology metropolis |
-| [London](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=london) | Roman river port, fire, rebuilding and global connections |
-| [Cairo & Giza](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=cairo) | Ancient necropolis, successive Nile capitals and the modern metropolis |
-| [Tokyo](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=tokyo) | Edo, imperial capital and repeated urban reinvention |
-| [New York](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=new-york) | Lenape homeland, colonial port and a city of five boroughs |
-| [Rio de Janeiro](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=rio) | Indigenous bay, colonial and imperial capital, landscape and inequality |
-| [Sydney](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?city=sydney) | Aboriginal harbour country, colonisation and metropolitan growth |
-
-The six new cities are **non-audio editions**. Hyderabad keeps its existing
-documentary tour, eight chapters and learning challenges; no other city
-downloads or plays narration.
-
 [![Explore Charminar in the founding city of 1591](docs/images/charminar-1591.png)](https://mkjsanghvi29.github.io/hyderabad-time-atlas/?year=1591&place=charminar)
 
 ## Pick your adventure
 
-- **Documentary traveller (Hyderabad):** choose **Audio tour** for a narrated journey through all eight eras. Sixteen stops, one original male guide, a quiet ambient score, and gentle camera moves. Pause, skip, read the transcript—or look around without stopping the narration.
+- **Documentary traveller:** choose **Audio tour** for a narrated journey through all eight eras. Sixteen stops, one original male guide, a quiet ambient score, and gentle camera moves. Pause, skip, read the transcript—or leave the tour and explore freely.
 - **Time traveller:** eight chapters, from Golconda in **1518** to metropolitan Hyderabad in **2025**.
 - **City-growth spotter:** 1998 opens as an illustrated 3D city. Choose **1998 satellite reference** to compare real **1998 and 2025 Landsat observations**. These are zoom-limited, top-down overviews—not street photography.
 - **Street explorer:** discover mapped streets, building footprints and terrain. Search Hyderabad's landmarks, parks, streets and other places by name—or choose **any point**. The handful of atlas pins are not the limits.
-- **History detective (Hyderabad):** tackle **24 mini-challenges**, follow field hints and collect **eight chapter badges**. Mistakes cost nothing; progress stays in your browser.
+- **History detective:** tackle **24 mini-challenges**, follow field hints and collect **eight chapter badges**. Mistakes cost nothing; progress stays in your browser.
 - **Pattern spotter:** keep a monument selected as time changes. Notice changing buildings, city milestones and source-linked population benchmarks.
 - **Story collector:** open **City life** for period-specific stories and surprising details, with sources to follow when curiosity strikes.
 
@@ -62,19 +40,14 @@ trip: navigate, notice a change, ask why, and follow the evidence.
 3. Open **Challenges**. Earn a badge, then ask which parts of the scene are documented and which are reconstruction.
 
 The teaching potential goes beyond dates: geography, urban change, heritage conservation
-and learning to question a source. Compare how rivers, ports, colonial rule or railways
-changed different cities, without assuming they share the same historical milestones.
-Teacher-designed quests and multilingual lesson trails
+and learning to question a source. Teacher-designed quests and multilingual lesson trails
 are possibilities for the future, not features already built.
 
 > **A time machine with footnotes.** This is a stylized, source-linked interpretation, not
 > photorealism or a surveyed digital twin. The modern map uses current geographic data;
 > building coverage varies and some heights are estimated. The illustrated historical
-> streets and neighbourhoods are reconstruction; generic landmark miniatures are not
-> exact period architectural models. Population records keep their actual census dates
-> and boundaries, and missing early counts are not invented. Ancient Giza is a
-> regional chapter, not a claim that Cairo already existed.
-> [Read the research behind the reconstruction.](RESEARCH.md)
+> streets are reconstruction. Population records keep their actual census dates and
+> boundaries. [Read the research behind the reconstruction.](RESEARCH.md)
 
 <details>
 <summary><strong>Run your own time machine</strong></summary>
@@ -115,11 +88,5 @@ game assets. GitHub Actions publishes `main` to GitHub Pages automatically.
 
 Browser journeys: `npx playwright install chromium`, then `npm run test:e2e`.
 Include live map-provider journeys with `ATLAS_LIVE_MAPS=1 npm run test:e2e`.
-
-City content lives in `src/world/cities/`, following the typed schema in
-`src/world/types.ts`. New-city timelines are data, not separate applications:
-the historical renderer, current map lifecycle, place search and interface are shared.
-Hyderabad's original richer reconstruction stays isolated to preserve its historical
-models, imagery rules and audio integration.
 
 </details>

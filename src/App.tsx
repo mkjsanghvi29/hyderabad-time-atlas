@@ -20,7 +20,6 @@ import type { GeographicLayer } from './mapTypes'
 import { cityStatistics } from './cityStatistics'
 import { EXPEDITIONS, goalsForVisit, loadExpeditions, saveExpeditions } from './expeditions'
 import type { AtlasSceneHandle, CameraMode, Coordinates, Landmark, MapView, SceneStatus, TimeOfDay } from './types'
-import CityPicker from './world/CityPicker'
 
 function initialEraIndex() {
   const year = Number(new URLSearchParams(location.search).get('year'))
@@ -381,9 +380,10 @@ export default function App() {
           <span className="brand-emblem"><ArchitecturalMark /></span>
           <span><strong>HYDERABAD</strong><small>THE TIME ATLAS</small></span>
         </a>
-        <CityPicker selected="hyderabad" />
+        <span className="masthead-description">One city. Five centuries. Countless stories.</span>
         <div className="masthead-actions">
           <button className="quiet-button audio-tour-launch" aria-label="Open guided audio tour" onClick={() => audioTour.setOpen(true)}><Icon name="headphones" /><span>Audio tour</span></button>
+          <span className="edition-tag">EXPLORER EDITION <b>01</b></span>
           <button className="quiet-button immersive-toggle" onClick={() => setImmersive(true)}><Icon name="compass" />Immersive view</button>
           <button className="quiet-button" onClick={() => setSourcesOpen(true)}><Icon name="book" /><span>Research &amp; sources</span></button>
           <button className="icon-button" title="Share this view" aria-label="Copy link to this view" onClick={copyView}><Icon name="arrow" /></button>
