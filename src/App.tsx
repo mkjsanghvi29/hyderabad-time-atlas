@@ -138,7 +138,8 @@ export default function App() {
   }, [cityMapOpen])
 
   useEffect(() => {
-    if (cityMapOpen || sourcesOpen) audioTour.pauseForExploration()
+    if (sourcesOpen) audioTour.pauseForExploration()
+    else if (cityMapOpen) audioTour.exploreCamera()
   }, [cityMapOpen, sourcesOpen])
 
   useEffect(() => {
@@ -245,7 +246,7 @@ export default function App() {
   }
 
   function navigateAnywhere(coordinates: Coordinates, label = 'Your chosen location', zoom?: number) {
-    audioTour.pauseForExploration()
+    audioTour.exploreCamera()
     if (!validCoordinates(coordinates)) {
       setNotice('Enter a valid latitude and longitude.')
       return
@@ -289,7 +290,7 @@ export default function App() {
   }
 
   function resetView(region = false) {
-    audioTour.pauseForExploration()
+    audioTour.exploreCamera()
     setCameraMode('orbit')
     setSelectedId(null)
     setDestination(null)
@@ -395,13 +396,13 @@ export default function App() {
           {geographic ? <GeographicScene key={`geographic-${mapReload}`} ref={scene} era={era} landmarks={LANDMARKS} selectedId={selected?.id ?? null}
             timeOfDay={timeOfDay} cameraMode={cameraMode} showCity={showCity} showLabels={showLabels}
             showRoads={showRoads} onSelect={focusPlace} onStatus={reportSceneStatus} onDistrictChange={recordDistrict}
-            guidedVisit={audioTour.state.visit} onGuidedArrival={audioTour.arrive} onExplore={audioTour.pauseForExploration} cinematicMotion={audioTour.cinematic}
+            guidedVisit={audioTour.state.visit} onGuidedArrival={audioTour.arrive} onExplore={audioTour.exploreCamera} cinematicMotion={audioTour.cinematic}
             onViewChange={setMapView} layer={activeLayer} satellite={satellite} destination={destination} destinationZoom={destinationZoom}
             onNavigate={navigateAnywhere} onError={setMapError} />
             : <AtlasScene ref={scene} era={era} landmarks={LANDMARKS} selectedId={selected?.id ?? null}
             timeOfDay={timeOfDay} cameraMode={cameraMode} showCity={showCity} showLabels={showLabels}
             showRoads={showRoads} onSelect={focusPlace} onStatus={reportSceneStatus} onDistrictChange={recordDistrict}
-            guidedVisit={audioTour.state.visit} onGuidedArrival={audioTour.arrive} onExplore={audioTour.pauseForExploration} cinematicMotion={audioTour.cinematic} />}
+            guidedVisit={audioTour.state.visit} onGuidedArrival={audioTour.arrive} onExplore={audioTour.exploreCamera} cinematicMotion={audioTour.cinematic} />}
           {sceneStatus === 'loading' && !mapError && <div className="scene-message" role="status"><span className="loading-orbit" />{geographic ? 'Loading geographic map data…' : 'Assembling the Deccan landscape…'}</div>}
           {sceneStatus === 'unavailable' && !geographic && <div className="scene-fallback"><span className="eyebrow">MAP MODE</span><h2>A different way to explore.</h2><p>3D rendering is unavailable in this browser. The timeline, landmark map, and source-linked history remain fully accessible.</p><Minimap large landmarks={LANDMARKS} year={era.year} selectedId={selectedId} onSelect={focusPlace} onNavigate={navigateAnywhere} /></div>}
           {geographic && mapError && <div className="map-error-panel" role="alert"><strong>Map data could not be loaded.</strong><p>{mapError}</p><button className="quiet-button" onClick={() => { setMapError(''); setMapReload((old) => old + 1) }}>Retry map</button><button className="quiet-button" onClick={() => switchGeography(false)}>Use illustrated reconstruction</button></div>}
@@ -463,8 +464,8 @@ export default function App() {
 
         <div className="scene-toolbar">
           <div className="tool-group" aria-label="Camera navigation">
-            <button className={cameraMode === 'orbit' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'orbit'} onClick={() => { audioTour.pauseForExploration(); setCameraMode('orbit') }}><Icon name="orbit" />{satelliteMap ? 'Map view' : 'Orbit'}</button>
-            <button className={cameraMode === 'walk' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'walk'} disabled={satelliteMap} title={satelliteMap ? '30 m satellite imagery is an overview, not a street-level view' : undefined} onClick={() => { audioTour.pauseForExploration(); setCameraMode('walk') }}><Icon name="walk" />{geographic ? 'Close-up' : 'Street view'}</button>
+            <button className={cameraMode === 'orbit' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'orbit'} onClick={() => { audioTour.exploreCamera(); setCameraMode('orbit') }}><Icon name="orbit" />{satelliteMap ? 'Map view' : 'Orbit'}</button>
+            <button className={cameraMode === 'walk' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'walk'} disabled={satelliteMap} title={satelliteMap ? '30 m satellite imagery is an overview, not a street-level view' : undefined} onClick={() => { audioTour.exploreCamera(); setCameraMode('walk') }}><Icon name="walk" />{geographic ? 'Close-up' : 'Street view'}</button>
           </div>
           <button className="tool-button layers-toggle" aria-expanded={layersOpen} onClick={() => setLayersOpen(!layersOpen)}><Icon name="layers" />Layers</button>
           {layersOpen && <div className="layers-panel">

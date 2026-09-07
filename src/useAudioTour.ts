@@ -24,6 +24,8 @@ export function useAudioTour(onVisit: (stop: AudioTourStop) => void) {
   const [voiceVolume, setVoiceVolume] = useState(1)
   const [rate, setRate] = useState(1)
   const [motion, setMotion] = useState(true)
+  const [manualCamera, setManualCamera] = useState(false)
+  const manualCameraRef = useRef(false)
   const [reducedMotion, setReducedMotion] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [musicError, setMusicError] = useState('')
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -95,6 +97,8 @@ export function useAudioTour(onVisit: (stop: AudioTourStop) => void) {
     const asset = NARRATION_AUDIO[stop.id]
     if (!asset) { fail('The narration for this stop is missing. The transcript is still available.'); return }
     const id = ++sequence.current
+    manualCameraRef.current = false
+    setManualCamera(false)
     clearDeadline()
     const pending = { id, ready: false, arrived: false, offset, starting: false }
     preparation.current = pending
@@ -147,6 +151,17 @@ export function useAudioTour(onVisit: (stop: AudioTourStop) => void) {
       startMusic(AUDIO_TOUR_STOPS[current.current.index])
       beginNarration()
     } else start(current.current.index, current.current.elapsed)
+  }
+
+  function exploreCamera() {
+    if (current.current.phase === 'travelling') {
+      pause('Travel paused. Resume to return to the guided stop.')
+      return
+    }
+    if (current.current.phase !== 'playing' || manualCameraRef.current) return
+    manualCameraRef.current = true
+    setManualCamera(true)
+    commit({ ...current.current, message: 'Camera under your control. Narration continues.' })
   }
 
   function stop() {
@@ -207,9 +222,9 @@ export function useAudioTour(onVisit: (stop: AudioTourStop) => void) {
   return {
     state, stopData: AUDIO_TOUR_STOPS[state.index], open, setOpen, audioRef,
     music, musicVolume, voiceVolume, rate, motion, reducedMotion, musicError,
-    cinematic: state.phase === 'playing' && motion && !reducedMotion,
+    cinematic: state.phase === 'playing' && motion && !reducedMotion && !manualCamera,
     active: state.phase !== 'idle',
-    start, pause, resume, stop, arrive, fail, ended, seek,
+    start, pause, resume, stop, arrive, fail, ended, seek, exploreCamera,
     pauseForExploration: () => pause('Paused for free exploration. Resume whenever you like.'),
     onTimeUpdate: () => {
       const audio = audioRef.current
@@ -222,7 +237,14 @@ export function useAudioTour(onVisit: (stop: AudioTourStop) => void) {
     setMusicVolume: (value: number) => { setMusicVolume(value); settings.current.musicVolume = value; soundtrack.current?.setVolume(value) },
     setVoiceVolume: (value: number) => { setVoiceVolume(value); settings.current.voiceVolume = value; if (audioRef.current) audioRef.current.volume = value },
     setRate: (value: number) => { setRate(value); settings.current.rate = value; if (audioRef.current) audioRef.current.playbackRate = value },
-    setMotion,
+    setMotion: (value: boolean) => {
+      setMotion(value)
+      if (value) {
+        manualCameraRef.current = false
+        setManualCamera(false)
+        if (current.current.phase === 'playing') commit({ ...current.current, message: '' })
+      }
+    },
   }
 }
 

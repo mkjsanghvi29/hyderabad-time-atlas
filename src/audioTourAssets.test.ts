@@ -9,10 +9,11 @@ describe('published documentary narration', () => {
     let seconds = 0
     for (const stop of AUDIO_TOUR_STOPS) {
       const asset = NARRATION_AUDIO[stop.id]
-      expect(asset.src, stop.id).toMatch(/^narration\/[a-z0-9-]+\.mp3$/)
+      expect(asset.src, stop.id).toMatch(/^narration\/[a-z0-9-]+\.mp3\?v=[a-f0-9]{12}$/)
       expect(asset.duration, stop.id).toBeGreaterThan(20)
       expect(asset.duration, stop.id).toBeLessThan(120)
       const file = new URL(`../public/${asset.src}`, import.meta.url)
+      file.search = ''
       expect(statSync(file).size, stop.id).toBeGreaterThan(10_000)
       expect(statSync(file).size, stop.id).toBeLessThan(2_000_000)
       seconds += asset.duration

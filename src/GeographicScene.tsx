@@ -41,6 +41,12 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
   const reportedError = useRef(false)
   const pendingGuided = useRef<{ id: number; coordinates: Coordinates } | null>(null)
   const guidedApplied = useRef<number | null>(null)
+  const cinematicInterrupted = useRef(false)
+
+  const exploreCamera = () => {
+    cinematicInterrupted.current = true
+    latest.current.onExplore?.()
+  }
 
   const reportError = (message: string) => {
     reportedError.current = true
@@ -115,8 +121,8 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
     locate: (coordinates, zoom) => dispatch({ type: 'locate', coordinates, zoom }),
     home: () => dispatch({ type: 'home' }),
     region: () => dispatch({ type: 'region' }),
-    zoom: (direction) => { latest.current.onExplore?.(); dispatch({ type: 'zoom', direction }) },
-    move: (direction) => { latest.current.onExplore?.(); dispatch({ type: 'move', direction }) },
+    zoom: (direction) => { exploreCamera(); dispatch({ type: 'zoom', direction }) },
+    move: (direction) => { exploreCamera(); dispatch({ type: 'move', direction }) },
   }), [])
 
   const { containerRef, map } = useGeographicMap({
@@ -147,7 +153,7 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
     },
     onError: reportError,
     onNavigate: (coordinates) => latest.current.onNavigate(coordinates),
-    onExplore: () => latest.current.onExplore?.(),
+    onExplore: exploreCamera,
     onIdle: (current) => {
       const pending = pendingGuided.current
       if (!pending || latest.current.guidedVisit?.requestId !== pending.id) return
@@ -231,7 +237,7 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
       const directions = { w: 'forward', s: 'backward', a: 'left', d: 'right' } as const
       const key = event.key.toLowerCase()
       if (key === 'w' || key === 's' || key === 'a' || key === 'd') {
-        latest.current.onExplore?.()
+        exploreCamera()
         event.preventDefault()
         event.stopPropagation()
         commandRef.current(map, { type: 'move', direction: directions[key] })
@@ -273,14 +279,36 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
       && !matchMedia('(prefers-reduced-motion: reduce)').matches
     map.getCanvas().dataset.cinematic = String(enabled)
     if (!enabled) return
+    cinematicInterrupted.current = false
     let stopped = false
     const rotate = () => {
-      if (!stopped) map.easeTo({ bearing: map.getBearing() + 6, duration: 12_000, easing: (value) => value })
+      if (!stopped && !cinematicInterrupted.current) map.easeTo({ bearing: map.getBearing() + 6, duration: 12_000, easing: (value) => value })
     }
     map.on('moveend', rotate)
     rotate()
-    return () => { stopped = true; map.off('moveend', rotate); map.stop() }
+    return () => { stopped = true; map.off('moveend', rotate); if (!cinematicInterrupted.current) map.stop() }
   }, [map, props.cinematicMotion, props.era.year, props.layer])
+
+  useEffect(() => {
+    if (!map) return
+    const container = map.getContainer()
+    const takeCamera = () => {
+      const rotating = latest.current.cinematicMotion && !cinematicInterrupted.current
+      exploreCamera()
+      if (rotating) map.stop()
+    }
+    const takeKeyboard = (event: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '-', '=', 'w', 'a', 's', 'd'].includes(event.key)) takeCamera()
+    }
+    container.addEventListener('pointerdown', takeCamera, true)
+    container.addEventListener('wheel', takeCamera, { capture: true, passive: true })
+    container.addEventListener('keydown', takeKeyboard, true)
+    return () => {
+      container.removeEventListener('pointerdown', takeCamera, true)
+      container.removeEventListener('wheel', takeCamera, true)
+      container.removeEventListener('keydown', takeKeyboard, true)
+    }
+  }, [map])
 
   return (
     <div className="geographic-scene" data-engine="maplibre" data-era={props.era.year} data-layer={usesDatedImagery(props.era.year, props.layer) ? 'satellite' : 'streets'}>

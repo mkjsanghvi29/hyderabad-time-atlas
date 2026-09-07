@@ -7,7 +7,9 @@
 The optional audio tour contains sixteen original, source-linked scripts, two per chapter.
 It does not replace the timeline or start automatically. Historical stops use the illustrated
 city, while the final chapter retains the current geographic map. Narration waits for the
-selected scene to arrive; manual exploration pauses the tour.
+selected scene to arrive. Looking around, panning and zooming hand camera control to
+the visitor without stopping narration. Choosing a different chapter or atlas story
+pauses the tour so its story does not continue against an unrelated scene.
 
 The narrator uses one original synthetic male voice throughout. A licensed self-service
 Attenborough or Freeman voice could not be verified for this project, so neither celebrity's

@@ -25,7 +25,7 @@ test('the tour is opt-in and supports arrival, playback, music controls and free
   const errors: string[] = []
   const requests: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await page.route('**/narration/*.mp3', (route) => {
+  await page.route('**/narration/*.mp3*', (route) => {
     requests.push(route.request().url())
     const wav = audioFixture()
     const range = route.request().headers().range?.match(/^bytes=(\d+)-(\d*)$/)
@@ -53,6 +53,13 @@ test('the tour is opt-in and supports arrival, playback, music controls and free
   await expect(page.locator('canvas')).toHaveAttribute('data-cinematic', 'true')
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.currentTime)).toBeGreaterThan(.15)
   await page.screenshot({ path: testInfo.outputPath('guided-tour-playing.png') })
+  await page.locator('canvas').focus()
+  await page.keyboard.press('w')
+  await expect(bar).toHaveAttribute('data-phase', 'playing')
+  await expect(page.locator('canvas')).toHaveAttribute('data-cinematic', 'false')
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false)
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
+  await expect(bar).toHaveAttribute('data-phase', 'playing')
   await page.getByRole('button', { name: 'Pause audio tour', exact: true }).click()
   await expect(bar).toHaveAttribute('data-phase', 'paused')
   expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true)
@@ -77,7 +84,7 @@ test('the tour is opt-in and supports arrival, playback, music controls and free
 })
 
 test('missing narration is reported without silently advancing the journey', async ({ page }) => {
-  await page.route('**/narration/*.mp3', (route) => route.fulfill({ status: 404 }))
+  await page.route('**/narration/*.mp3*', (route) => route.fulfill({ status: 404 }))
   await page.goto('/?year=1591&view=atlas')
   await page.getByRole('button', { name: 'Open guided audio tour', exact: true }).click()
   await page.getByRole('button', { name: 'Start full audio tour', exact: true }).click()
@@ -113,6 +120,17 @@ test('the complete recorded tour visits all sixteen stops and finishes on the mo
     await expect(page).toHaveURL(new RegExp(`year=${stop.year}`))
     await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => !element.paused && !element.muted && element.currentTime > .1)).toBe(true)
     if ([0, 12, 14].includes(index)) await page.screenshot({ path: testInfo.outputPath(`recorded-tour-${stop.year}.png`) })
+    if (index === 14) {
+      const map = page.locator('.geographic-scene canvas')
+      await map.focus()
+      await page.keyboard.press('w')
+      await expect(map).toHaveAttribute('data-cinematic', 'false')
+      await expect(bar).toHaveAttribute('data-phase', 'playing')
+      expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false)
+      await page.getByRole('button', { name: /Expand city map/ }).click()
+      await expect(bar).toHaveAttribute('data-phase', 'playing')
+      await page.getByRole('button', { name: 'Close city map', exact: true }).click()
+    }
     await audio.evaluate((element: HTMLAudioElement) => { element.currentTime = element.duration - .15 })
   }
   await expect(bar).toHaveAttribute('data-phase', 'complete', { timeout: 15_000 })

@@ -25,6 +25,11 @@ const STOP_IDS = [
 const ATMOSPHERES = ['fort', 'bazaar', 'river', 'palace', 'campus', 'modern']
 
 describe('the guided Hyderabad audio tour', () => {
+  it('uses Qutub spelling in spoken narration for the intended pronunciation', () => {
+    const scripts = AUDIO_TOUR_STOPS.map((stop) => stop.speechText ?? stop.narration)
+    expect(scripts.join(' ')).toContain('Qutub Shahi')
+    for (const script of scripts) expect(script).not.toMatch(/\bQutb\b/)
+  })
   it('provides exactly two stops for each of the eight atlas eras', () => {
     expect(ERAS.map((era) => era.year)).toEqual(CHAPTER_YEARS)
     expect(AUDIO_TOUR_STOPS).toHaveLength(16)

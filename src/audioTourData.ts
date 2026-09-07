@@ -19,7 +19,7 @@ export const AUDIO_TOUR_STOPS: AudioTourStop[] = [
     title: 'A kingdom on older stone',
     subtitle: 'Golconda before the founding of Hyderabad',
     target: { kind: 'landmark', id: 'golconda' },
-    narration: `Before there is Hyderabad, there is this hill. It is fifteen eighteen, the beginning of Qutb Shahi rule. Look towards Golconda's upper walls. Parts of that defensive circuit reach back to the fourteenth century: even a new dynasty begins by inheriting something older.
+    narration: `Before there is Hyderabad, there is this hill. It is fifteen eighteen, the beginning of Qutub Shahi rule. Look towards Golconda's upper walls. Parts of that defensive circuit reach back to the fourteenth century: even a new dynasty begins by inheriting something older.
 
 The fort will grow through successive reigns, so its familiar outline belongs to many moments, not one building campaign. Within this fortified landscape, military, residential and courtly life belong together. Imagine approaching with a delivery, looking for an entrance rather than a view. To someone making that journey, the hill is a place of work as well as power. Our story begins in that difference. Now let us come down from the battlements and consider the city that keeps them alive.`,
     sources: ['unesco', 'history'],
@@ -43,7 +43,7 @@ The dynasty's founder came from Iran, but power here was built through Deccani c
     title: 'Four arches, a new beginning',
     subtitle: 'Charminar gives a new capital its centre',
     target: { kind: 'landmark', id: 'charminar' },
-    narration: `Fifteen ninety-one. Our view opens around Charminar, at the heart of the city founded by Muhammad Quli Qutb Shah. Four monumental arches meet the directions of the new capital's principal avenues. This is architecture that helps people find their way, not simply something to admire from a distance.
+    narration: `Fifteen ninety-one. Our view opens around Charminar, at the heart of the city founded by Muhammad Quli Qutub Shah. Four monumental arches meet the directions of the new capital's principal avenues. This is architecture that helps people find their way, not simply something to admire from a distance.
 
 Look above the crossroads, too. A mosque occupies the western end of the upper floor, bringing a place of prayer into the same structure that organizes movement below. Imagine choosing a direction here, with a new city still forming around you. The densely familiar old city of later centuries has not appeared overnight. Golconda remains to the west, part of the same wider landscape. To understand how the new centre connects with that older world, we turn towards the Musi.`,
     sources: ['unesco', 'charminar'],
@@ -55,7 +55,7 @@ Look above the crossroads, too. A mosque occupies the western end of the upper f
     title: 'The bridge was here first',
     subtitle: 'Purana Pul connects an older landscape to the new city',
     target: { kind: 'landmark', id: 'purana-pul' },
-    narration: `Here is a small reversal of expectations: the new capital is younger than this crossing. Purana Pul spans the Musi, with its construction generally dated to fifteen seventy-eight under Ibrahim Quli Qutb Shah. The river landscape already had a connection before Charminar became its great landmark.
+    narration: `Here is a small reversal of expectations: the new capital is younger than this crossing. Purana Pul spans the Musi, with its construction generally dated to fifteen seventy-eight under Ibrahim Quli Qutub Shah. The river landscape already had a connection before Charminar became its great landmark.
 
 Imagine pausing on an approach, deciding which way your journey should continue. For a traveller, a bridge can matter more immediately than a palace. It makes the other bank reachable. This older crossing helps us read Hyderabad as a city growing through existing relationships, not starting from nothing. Golconda, the river and the new southern centre belong in one story. We follow that connected landscape into the next century, when its streets and monuments will outlast the kingdom that shaped them.`,
     sources: ['bridge', 'unesco', 'history'],
@@ -65,9 +65,9 @@ Imagine pausing on an approach, deciding which way your journey should continue.
     id: '1687-fort-and-conquest',
     year: 1687,
     title: 'The walls outlast the kingdom',
-    subtitle: 'Golconda at the end of Qutb Shahi sovereignty',
+    subtitle: 'Golconda at the end of Qutub Shahi sovereignty',
     target: { kind: 'landmark', id: 'golconda' },
-    narration: `We return to Golconda in sixteen eighty-seven. After a Mughal siege, the fort falls to Aurangzeb, ending Qutb Shahi sovereignty. These are enormous changes in a short sentence. The survival of buildings must not be mistaken for an absence of suffering, or for an ordinary day in the lives around them.
+    narration: `We return to Golconda in sixteen eighty-seven. After a Mughal siege, the fort falls to Aurangzeb, ending Qutub Shahi sovereignty. These are enormous changes in a short sentence. The survival of buildings must not be mistaken for an absence of suffering, or for an ordinary day in the lives around them.
 
 The fort was also part of a commercial world. Routes linked it with the port of Masulipatam; textiles and printed cloth mattered alongside the diamonds for which Golconda became famous. Picture that wider network rather than a royal treasure chest alone. Conquest changes the political order, but it does not instantly replace every workshop or turn every wall into a ruin. Nearby, the royal burial landscape offers another way to understand what has ended, and what remains.`,
     sources: ['unesco', 'history'],
@@ -77,9 +77,9 @@ The fort was also part of a commercial world. Routes linked it with the port of 
     id: '1687-absent-ruler',
     year: 1687,
     title: 'An ending marked by absence',
-    subtitle: 'The Qutb Shahi Tombs and the dynasty\'s last ruler',
+    subtitle: 'The Qutub Shahi Tombs and the dynasty\'s last ruler',
     target: { kind: 'landmark', id: 'tombs' },
-    narration: `Among these domes, an absence tells part of the story. The last Qutb Shahi ruler, Abul Hasan Tana Shah, was exiled to Aurangabad. He does not join this royal burial landscape beside Golconda.
+    narration: `Among these domes, an absence tells part of the story. The last Qutub Shahi ruler, Abul Hasan Tana Shah, was exiled to Aurangabad. He does not join this royal burial landscape beside Golconda.
 
 The tombs had accumulated across generations. The earliest royal tomb belongs to Sultan Quli, who died in fifteen forty-three, long before the Mughal conquest that closes this dynasty's political story. Their raised platforms and domes make a family of buildings, not a complex completed in one moment. Pause at that contrast: political rule can end abruptly, while the places made to preserve memory remain. They ask later generations what should be remembered and cared for. We leave these royal memorials for the inhabited city, where another court will eventually take up an older urban inheritance.`,
     sources: ['unesco', 'conservation', 'history'],
@@ -91,7 +91,7 @@ The tombs had accumulated across generations. The earliest royal tomb belongs to
     title: 'A new court, an older skyline',
     subtitle: 'Mecca Masjid links successive periods of rule',
     target: { kind: 'landmark', id: 'mecca-masjid' },
-    narration: `Beside Charminar, Mecca Masjid now stands complete. Begun under the Qutb Shahis and finished under Mughal rule, the mosque carries a history longer than any single reign. Its prayer hall and courtyard anchor a city that another dynasty will make its capital.
+    narration: `Beside Charminar, Mecca Masjid now stands complete. Begun under the Qutub Shahis and finished under Mughal rule, the mosque carries a history longer than any single reign. Its prayer hall and courtyard anchor a city that another dynasty will make its capital.
 
 Our chapter is seventeen sixty-three, the commonly given year of the Asaf Jahi court's return from Aurangabad. A Telangana government account places the move six years later. Either way, the court returns to an inherited city, not a blank site. Imagine entering the surrounding streets with a delivery: established landmarks would still help you find your way, even as political priorities changed. New power settles among older places. Close by, a palace project is beginning a much longer process of becoming.`,
     sources: ['mosque', 'history', 'capital'],
@@ -199,7 +199,7 @@ Imagine a journey between a newer workplace and an older neighbourhood. Campuses
     title: 'What the future chooses to keep',
     subtitle: 'Conservation connects the royal tombs to today’s city',
     target: { kind: 'landmark', id: 'tombs' },
-    narration: `We end near the hill where we began. The Qutb Shahi Tombs are made with local granite and plaster, and their conservation is part of Hyderabad's present-day story. A repaired surface is not a failure to look old. It can be evidence that people have chosen to care.
+    narration: `We end near the hill where we began. The Qutub Shahi Tombs are made with local granite and plaster, and their conservation is part of Hyderabad's present-day story. A repaired surface is not a failure to look old. It can be evidence that people have chosen to care.
 
 These domes once marked a dynasty's memory. Now their future depends on work undertaken long after that dynasty disappeared. The same expanding city that builds new workplaces also inherits older responsibilities. That is the connection between the western skyline and this quiet royal landscape: neither has a future without human decisions. Across our journey, capitals, crossings, classrooms and working districts have changed the city. What endures is not a frozen past, but the possibility of carrying it thoughtfully into what comes next.`,
     sources: ['conservation', 'unesco'],
