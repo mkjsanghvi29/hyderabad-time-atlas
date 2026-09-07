@@ -28,7 +28,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { CITY_DISTRICTS, nearestDistrict } from './city'
 import { project, unproject } from './geography'
 import { createAtmosphere } from './scene/atmosphere'
-import type { AtlasSceneHandle, AtlasSceneProps, Landmark, TimeOfDay } from './types'
+import type { AtlasSceneHandle, AtlasSceneProps, Coordinates, Landmark, TimeOfDay } from './types'
 import { createMaterials, disposeMaterials, readPalette, setNightMaterials, type AtlasMaterials, type AtlasPalette } from './scene/palette'
 import { buildWorld, createSelectionRing, surfaceHeight, WORLD_BOUNDS, type World } from './scene/world'
 
@@ -296,6 +296,17 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
     runtime.renderer.domElement.focus({ preventScroll: true })
   }
 
+  function locate(coordinates: Coordinates): void {
+    const runtime = runtimeRef.current
+    if (!runtime) return
+    const [x, z] = project(coordinates)
+    const target = new Vector3(x, .15, z)
+    const position = runtime.cameraMode === 'walk'
+      ? target.clone().add(new Vector3(0, 0, .8))
+      : target.clone().add(new Vector3(4, 7, 6))
+    beginFlight(position, target)
+  }
+
   function zoom(direction: 'in' | 'out'): void {
     const runtime = runtimeRef.current
     if (!runtime || runtime.contextLost) return
@@ -349,6 +360,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
   useImperativeHandle(forwardedRef, () => ({
     focus: focusLandmark,
     travel,
+    locate,
     home,
     region,
     zoom,

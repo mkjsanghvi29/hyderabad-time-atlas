@@ -2,20 +2,105 @@
 
 ## Scope and evidence
 
-The atlas follows Hyderabad across eight chapters, 1518 to 2025. Its metropolitan envelope
+The app now distinguishes **illustrated reconstruction** from **geographic reference**.
+The former retains the original procedural historical city. The 2025 chapter's geographic
+mode uses the latest maps, as requested, rather than pretending that a live map is a frozen
+2025 survey. It streams OpenStreetMap-derived roads, labels and mapped building footprints
+through OpenFreeMap, with a Mapterhorn elevation reference. Buildings missing from the
+source are not filled in with invented footprints. Height information may be estimated;
+the scene is not photogrammetry, a complete architectural inventory, or street photography.
+
+The illustrated atlas follows Hyderabad across eight chapters, 1518 to 2025. Its metropolitan envelope
 is approximately 48 by 50 km, from 78.24 to 78.69 degrees east and 17.20 to 17.65 degrees north.
 Twenty-five interpreted neighbourhood zones are joined by schematic streets and corridor
 development. This is not a complete building inventory and must not be confused with the
 much larger HMDA administrative planning jurisdiction.
 
-Historical events and monument dates are researched; geometry is an original visual interpretation.
+In the illustrated mode, historical events and monument dates are researched; geometry is an original visual interpretation.
 No cadastral maps, architectural surveys, measured terrain, historical aerial photographs or
-building-footprint datasets have been imported. Heights are exaggerated for legibility. District
+building-footprint datasets are used for that procedural model. Heights are exaggerated for legibility. District
 density expresses a narrative, not a population estimate. Coordinates are approximate anchors,
 not evidence for a building's exact footprint, orientation, or boundary in a given year.
 Ground outside the architectural models is intentionally flat so that the streets and buildings
 share a reliable traversal surface. District names are modern orientation labels, not a claim
 that the same named administrative units existed at every date.
+
+The approximately 85-by-72-km default geographic overview is a **camera framing**, not a
+municipal boundary. Geographic navigation is not restricted to the original 25 zones or
+landmark pins: visitors can pan, zoom and click any coordinate, search current mapped
+places by name, use the local destination catalogue, or enter latitude and longitude.
+The local catalogue is not the limit of modern search. In the 2025 geographic view,
+pressing Go sends the submitted name to Photon, restricted to the Hyderabad viewing
+envelope; typing alone sends nothing. Coordinates are parsed on the device. Current
+search results are not offered in historical chapters or the offline illustrated mode.
+Selecting a mapped view sends normal tile requests to the credited providers.
+There is no browser geolocation request or account.
+
+### Geographic source and reuse record
+
+- [OpenFreeMap](https://openfreemap.org/) provides the public vector-map service.
+  Its [bright style](https://tiles.openfreemap.org/styles/bright) supplies the source
+  schema for current cartography. Map styling does not make historical dates or building
+  heights more certain.
+- [OpenStreetMap copyright and licence](https://www.openstreetmap.org/copyright):
+  map data is credited to OpenStreetMap contributors under the Open Database Licence.
+  Provider attribution remains visible in both the main map and expanded overview.
+- [Photon](https://github.com/komoot/photon) provides current OpenStreetMap-derived
+  place search through its public demo endpoint, `https://photon.komoot.io/api/`.
+  The [API documentation](https://github.com/komoot/photon/blob/master/docs/api-v1.md)
+  defines the `bbox=west,south,east,north` restriction. Salar Jung Museum, Birla Mandir
+  and Durgam Cheruvu queries returned matching GeoJSON points with public CORS access.
+  Results preserve map-record links and address detail; they do not establish historical
+  existence, an entrance location, or comprehensive business coverage. The demo permits
+  reasonable use, may throttle or ban extensive use, and offers no availability guarantee.
+  The app submits only on demand, spaces requests at least 1.1 seconds apart per loaded
+  app, keeps a bounded in-memory cache and surfaces service errors. It does not persist
+  search history. A high-traffic deployment should replace `PLACE_SEARCH_ENDPOINT` with
+  a suitable hosted or self-managed Photon service; the public demo is not an SLA.
+- [Mapterhorn](https://mapterhorn.com/) documents global terrain at approximately 30 m,
+  drawn from open elevation datasets. The [public TileJSON](https://tiles.mapterhorn.com/tilejson.json)
+  specifies Terrarium encoding and 512-pixel tiles. [Source attribution](https://mapterhorn.com/attribution)
+  is preserved. Elevation is a reference surface, not a dated reconstruction of past ground levels.
+
+Maps and elevation are streamed, not bulk-downloaded or included in the source repository.
+They require an internet connection. The single-file edition defaults to the original
+illustrated atlas, whose models, stories and challenges remain self-contained. Network
+errors are surfaced with a retry and an explicitly labelled reconstruction option; a failed
+historical layer must never silently turn into a modern map.
+
+### Dated city observations
+
+Both Landsat scenes were verified in Microsoft Planetary Computer's STAC item metadata;
+sample RGB tiles at the central city, western corridor and airport site returned nonblank
+256-pixel PNGs with public browser CORS access. No account or signed asset URL is embedded.
+
+| Chapter | Acquisition | STAC item | Native RGB resolution |
+|---|---|---|---|
+| 1998 | 7 June 1998 | `LT05_L2SP_144048_19980607_02_T1` | 30 m, Landsat 5 bands 3/2/1 |
+| 2025 | 17 February 2025 | `LC09_L2SP_144048_20250217_02_T1` | 30 m, Landsat 9 bands 4/3/2 |
+
+The scenes report 0% scene-wide cloud cover. Their actual footprints cover central Hyderabad,
+the western corridor and the airport region. Their rectangular bounds include corner areas
+outside the rotated valid-data footprints. The raster source caps requests at zoom 13;
+further zoom magnifies existing pixels, not new detail.
+
+June and February are different seasons. Vegetation and colour differences cannot be
+attributed only to urban growth. The June 1998 observation also predates Cyber Towers'
+November opening: its marker locates the site, not a proven completed building in that image.
+No contemporary roads, buildings or airport labels are overlaid on the 1998 satellite view.
+
+Sources: [1998 item metadata](https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l2/items/LT05_L2SP_144048_19980607_02_T1),
+[2025 item metadata](https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l2/items/LC09_L2SP_144048_20250217_02_T1)
+and [collection record](https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l2).
+The collection's explicit USGS licence link is labelled **Public Domain**, although its
+generic top-level STAC licence string says `proprietary`. USGS/NASA and Microsoft Planetary
+Computer attribution is retained. Anonymous tile delivery was established, not an unlimited-use
+hosting guarantee or service-level agreement.
+
+Airport destinations use secondary [RGIA chronology](https://en.wikipedia.org/wiki/Rajiv_Gandhi_International_Airport)
+and [Begumpet history](https://en.wikipedia.org/wiki/Begumpet_Airport). Commercial operations
+moved to RGIA on 23 March 2008, so 1998's commercial-airport destination is Begumpet.
+Coordinates are published airport reference points, not directions to a terminal entrance.
 
 ## Chronology and representation decisions
 
@@ -159,9 +244,10 @@ The transcript was unavailable during research. Specific controls, dates, source
 rendering methods and asset provenance in that example were not independently established.
 The atlas borrows the broad time-navigation idea, not any London assets or code.
 
-All bundled architectural models and surfaces are generated from original procedural code.
-No Google imagery, commercial game assets, third-party photographs, remote terrain tiles or
-copied monument models are used. Source texts are paraphrased and linked; not reproduced wholesale.
+All bundled architectural miniatures and surfaces are generated from original procedural code.
+Geographic mode separately streams the credited map, elevation and Landsat sources above.
+No Google imagery, commercial game assets or copied monument models are used.
+Source texts are paraphrased and linked; not reproduced wholesale.
 
 Photorealistic, defensible reconstruction would require licensed archival imagery and maps,
 measured terrain and architectural scans, expert review, and an asset-production pipeline.

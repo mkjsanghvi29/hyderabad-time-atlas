@@ -40,10 +40,17 @@ export type Era = {
 export type TimeOfDay = 'golden' | 'day' | 'night'
 export type CameraMode = 'orbit' | 'walk'
 export type SceneStatus = 'loading' | 'ready' | 'unavailable'
+export type MapView = {
+  center: Coordinates
+  bounds: readonly [west: number, south: number, east: number, north: number]
+  zoom: number
+  bearing: number
+}
 
 export type AtlasSceneHandle = {
   focus: (landmarkId: string) => void
   travel: (districtId: string) => void
+  locate: (coordinates: Coordinates, zoom?: number) => void
   home: () => void
   region: () => void
   zoom: (direction: 'in' | 'out') => void
@@ -62,4 +69,5 @@ export type AtlasSceneProps = {
   onSelect: (id: string) => void
   onStatus: (status: SceneStatus) => void
   onDistrictChange?: (districtId: string) => void
+  onViewChange?: (view: MapView) => void
 }

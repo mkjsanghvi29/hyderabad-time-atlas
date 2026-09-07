@@ -1,4 +1,5 @@
 import type { CityDistrict } from './city'
+import CityStories from './CityStories'
 
 export type EraLife = {
   year: number
@@ -9,11 +10,12 @@ export type EraLife = {
   sources: string[]
 }
 
-export default function CityLifePanel({ story, districts, explored, onVisit, onSources }: {
+export default function CityLifePanel({ story, districts, explored, onVisit, onLandmark, onSources }: {
   story: EraLife
   districts: CityDistrict[]
   explored: Set<string>
   onVisit: (id: string) => void
+  onLandmark: (id: string) => void
   onSources: () => void
 }) {
   const count = districts.filter((district) => explored.has(`${story.year}:${district.id}`)).length
@@ -21,6 +23,7 @@ export default function CityLifePanel({ story, districts, explored, onVisit, onS
     <div className="city-life-panel">
       <span className="eyebrow">NOT JUST MONUMENTS</span>
       <h1>{story.title}</h1>
+      <CityStories year={story.year} onVisit={onLandmark} />
       <div className="life-vignette">
         <span className="eyebrow">A RECONSTRUCTED STREET SCENE</span>
         <p>{story.vignette}</p>

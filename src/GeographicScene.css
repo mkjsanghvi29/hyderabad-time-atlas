@@ -1,0 +1,320 @@
+.geographic-scene,
+.geographic-overview {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.geographic-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.geographic-overview {
+  height: 200px;
+  border-radius: 10px;
+}
+
+.geographic-overview.is-expanded {
+  height: 100%;
+  min-height: 320px;
+}
+
+.geographic-scene .maplibregl-map,
+.geographic-overview .maplibregl-map {
+  font: inherit;
+}
+
+.geographic-scene .maplibregl-ctrl,
+.geographic-overview .maplibregl-ctrl {
+  font: inherit;
+  color: var(--cp-text);
+}
+
+.geographic-scene .maplibregl-ctrl-group,
+.geographic-overview .maplibregl-ctrl-group {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--cp-border);
+  overflow: hidden;
+}
+
+.geographic-scene .maplibregl-ctrl-group button,
+.geographic-overview .maplibregl-ctrl-group button {
+  color: var(--cp-text);
+  border-color: var(--cp-border);
+  position: relative;
+  min-width: 30px;
+  min-height: 30px;
+}
+
+.geographic-scene .maplibregl-ctrl-group button:hover,
+.geographic-overview .maplibregl-ctrl-group button:hover {
+  background: var(--cp-accent-soft);
+  color: var(--cp-accent);
+}
+
+.geographic-scene .maplibregl-ctrl-group button:focus-visible,
+.geographic-overview .maplibregl-ctrl-group button:focus-visible {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: -3px;
+  box-shadow: none;
+}
+
+.geographic-scene .maplibregl-ctrl-icon,
+.geographic-overview .maplibregl-ctrl-icon {
+  background-image: none !important;
+  display: grid;
+  place-items: center;
+}
+
+.geographic-scene .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon::before,
+.geographic-overview .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon::before {
+  content: "+";
+  font-size: 22px;
+}
+
+.geographic-scene .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon::before,
+.geographic-overview .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon::before {
+  content: "\2212";
+  font-size: 22px;
+}
+
+.geographic-scene .maplibregl-ctrl-compass .maplibregl-ctrl-icon::before {
+  content: "\2191";
+  color: var(--cp-accent);
+  font-size: 23px;
+}
+
+.geographic-scene .maplibregl-ctrl-top-right {
+  top: 68px;
+  right: 14px;
+}
+
+.geographic-scene .maplibregl-ctrl-attrib,
+.geographic-overview .maplibregl-ctrl-attrib {
+  background: var(--cp-panel-strong);
+  color: var(--cp-text-muted);
+  font-size: 10px;
+  line-height: 1.45;
+  padding: 3px 6px;
+  border-radius: 0;
+}
+
+.geographic-scene .maplibregl-ctrl-attrib a,
+.geographic-overview .maplibregl-ctrl-attrib a {
+  color: var(--cp-link);
+}
+
+.geographic-scene .maplibregl-ctrl-bottom-left,
+.geographic-overview .maplibregl-ctrl-bottom-left {
+  max-width: 100%;
+}
+
+.geographic-scene .maplibregl-ctrl-bottom-left {
+  left: 350px;
+  right: 350px;
+  max-width: none;
+}
+
+.immersive .geographic-scene .maplibregl-ctrl-bottom-left {
+  left: 10px;
+}
+
+.geographic-mode .navigation-hint {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .geographic-scene .maplibregl-ctrl-bottom-left { left: 312px; right: 330px; }
+}
+
+@media (max-width: 980px) {
+  .geographic-mode .map-caption { display: none; }
+  .geographic-scene .maplibregl-ctrl-bottom-left { left: 0; right: 330px; }
+}
+
+@media (max-width: 600px) {
+  .geographic-scene .maplibregl-ctrl-bottom-left { left: 0; right: 190px; }
+  .geographic-scene .maplibregl-ctrl-attrib { font-size: 8px; }
+}
+
+.geographic-scene .maplibregl-ctrl-scale,
+.geographic-overview .maplibregl-ctrl-scale {
+  background: var(--cp-panel-strong);
+  border-color: var(--cp-text-muted);
+  color: var(--cp-text-muted);
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 9px;
+}
+
+.geographic-landmark {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 50%;
+  color: var(--cp-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.geographic-landmark::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--cp-accent);
+  border: 2px solid var(--cp-surface);
+  box-shadow: 0 0 0 1px var(--cp-accent);
+}
+
+.geographic-landmark.is-selected {
+  z-index: 2;
+}
+
+.geographic-landmark.is-selected::before {
+  inset: 6px;
+  box-shadow: 0 0 0 4px var(--cp-highlight);
+}
+
+.geographic-landmark-label {
+  display: none;
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 160px;
+  width: max-content;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--cp-border);
+  background: var(--cp-panel-strong);
+  color: var(--cp-text);
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: left;
+  pointer-events: none;
+}
+
+.geographic-landmark.shows-label .geographic-landmark-label,
+.geographic-landmark:hover .geographic-landmark-label,
+.geographic-landmark:focus-visible .geographic-landmark-label,
+.geographic-landmark.is-compact.is-selected .geographic-landmark-label {
+  display: block;
+}
+
+.geographic-landmark.is-compact {
+  width: 24px;
+  height: 24px;
+}
+
+.geographic-landmark.label-obscured:not(:hover):not(:focus-visible) .geographic-landmark-label {
+  display: none;
+}
+
+.geographic-landmark.is-compact .geographic-landmark-label {
+  font-size: 9px;
+  left: 22px;
+  max-width: 120px;
+}
+
+.geographic-destination {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--cp-accent);
+  border-radius: 50%;
+  background: var(--cp-accent-soft);
+  box-shadow: 0 0 0 2px var(--cp-surface);
+  pointer-events: none;
+}
+
+.geographic-destination::before,
+.geographic-destination::after {
+  content: "";
+  position: absolute;
+  background: var(--cp-accent);
+}
+
+.geographic-destination::before {
+  width: 2px;
+  height: 24px;
+  left: 7px;
+  top: -4px;
+}
+
+.geographic-destination::after {
+  width: 24px;
+  height: 2px;
+  left: -4px;
+  top: 7px;
+}
+
+.geographic-overview-legend {
+  position: absolute;
+  z-index: 1;
+  top: 5px;
+  left: 5px;
+  right: 44px;
+  width: fit-content;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 3px 5px;
+  background: var(--cp-panel-strong);
+  color: var(--cp-text-muted);
+  border-radius: 4px;
+  font-size: 8px;
+  pointer-events: none;
+}
+
+.geographic-viewport-key {
+  width: 11px;
+  height: 8px;
+  border: 1px dashed var(--cp-accent);
+  background: var(--cp-accent-soft);
+}
+
+.geographic-destination-key {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--cp-accent);
+  border-radius: 50%;
+  margin-left: 3px;
+}
+
+.geographic-map-error {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100% - 24px));
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--cp-danger);
+  border-radius: 10px;
+  background: var(--cp-panel-strong);
+  color: var(--cp-text);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.geographic-overview .geographic-map-error {
+  font-size: 10px;
+  padding: 10px;
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+}

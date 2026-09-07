@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('era explorer, tours and cited field notes work across the timeline', async ({ page }, testInfo) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await page.goto('/?year=1591')
+  await page.goto('/?year=1591&view=atlas')
   await expect(page).toHaveTitle('Hyderabad 1591 · Through Time')
   await expect(page.locator('canvas')).toBeVisible({ timeout: 25_000 })
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Read this chapter/ }).click()
@@ -33,7 +33,7 @@ test('era explorer, tours and cited field notes work across the timeline', async
 test('navigation, atmosphere and map layers respond without page errors', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await page.goto('/?year=1948')
+  await page.goto('/?year=1948&view=atlas')
   await expect(page.locator('canvas')).toBeVisible({ timeout: 25_000 })
   await page.getByRole('button', { name: 'After dark', exact: true }).click()
   await expect(page.getByRole('button', { name: 'After dark', exact: true })).toHaveAttribute('aria-pressed', 'true')
@@ -52,11 +52,11 @@ test('navigation, atmosphere and map layers respond without page errors', async 
 })
 
 test('deep links respect chronology and era changes do not retain stale search', async ({ page }, testInfo) => {
-  await page.goto('/?year=1518&place=cyber-towers')
-  await expect(page).toHaveURL(/year=1518$/)
+  await page.goto('/?year=1518&place=cyber-towers&view=atlas')
+  await expect(page).toHaveURL(/year=1518&view=atlas$/)
   await expect(page.locator('.field-note-panel')).toHaveCount(0)
   await expect(page.locator('.mini-map').getByRole('button', { name: 'Locate Charminar', exact: true })).toHaveCount(0)
-  await page.goto('/?year=2025&place=cyber-towers')
+  await page.goto('/?year=2025&place=cyber-towers&view=atlas')
   await expect(page.locator('.field-note-panel')).toContainText('Cyber Towers')
   await page.getByRole('button', { name: 'Close field note', exact: true }).click()
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Read this chapter/ }).click()
@@ -69,7 +69,7 @@ test('deep links respect chronology and era changes do not retain stale search',
 })
 
 test('a pinned monument stays in view while its historical condition changes', async ({ page }) => {
-  await page.goto('/?year=1591&place=golconda')
+  await page.goto('/?year=1591&place=golconda&view=atlas')
   await expect(page.locator('.monument-time-note')).toContainText('A working fortified city')
   await page.getByRole('button', { name: 'Keep this place as time changes', exact: true }).click()
   await page.getByRole('button', { name: /2025:/ }).click()
@@ -85,7 +85,7 @@ test('city life enters populated neighbourhoods and street navigation moves the 
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
-  await page.goto('/?year=2025')
+  await page.goto('/?year=2025&view=atlas')
   const canvas = page.locator('canvas')
   await expect(canvas).toHaveAttribute('data-city-districts', '25', { timeout: 30_000 })
   expect(Number(await canvas.getAttribute('data-city-buildings'))).toBeGreaterThan(1000)
@@ -109,7 +109,7 @@ test('city life enters populated neighbourhoods and street navigation moves the 
 
 test('modern minimap markers remain individually selectable', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Same deterministic marker layout on mobile')
-  await page.goto('/?year=2025')
+  await page.goto('/?year=2025&view=atlas')
   await page.locator('.mini-map').getByRole('button', { name: 'Locate Charminar', exact: true }).click()
   await expect(page.locator('.field-note-panel')).toContainText('Charminar')
   await page.getByRole('button', { name: 'Minimize field note', exact: true }).click()
@@ -122,7 +122,7 @@ test('an era expedition rewards exploration and learning, then survives a reload
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
-  await page.goto('/?year=1591')
+  await page.goto('/?year=1591&view=atlas')
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Read this chapter/ }).click()
   await page.getByRole('button', { name: /Challenges/ }).click()
   const cards = page.locator('.challenge-card')
@@ -147,7 +147,7 @@ test('an era expedition rewards exploration and learning, then survives a reload
 })
 
 test('city statistics disclose benchmark dates, boundaries and missing evidence', async ({ page }, testInfo) => {
-  await page.goto('/?year=1908')
+  await page.goto('/?year=1908&view=atlas')
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Read this chapter/ }).click()
   const stats = page.getByRole('region', { name: 'City statistics for 1908' })
   await expect(stats).toContainText('Population · 1901')
@@ -178,10 +178,35 @@ test('the guide still works without WebGL', async ({ page }, testInfo) => {
       },
     })
   })
-  await page.goto('/?year=1518')
+  await page.goto('/?year=1518&view=atlas')
   await expect(page.getByRole('heading', { name: 'A different way to explore.' })).toBeVisible()
   await page.locator('.large-map').getByRole('button', { name: 'Locate Golconda Fort' }).click()
   await expect(page.locator('.field-note-panel')).toContainText('Golconda Fort')
   await page.getByRole('button', { name: /2025:/ }).click()
   await expect(page).toHaveTitle('Hyderabad 2025 · Through Time')
+})
+
+test('period stories link back to era-appropriate places', async ({ page }, testInfo) => {
+  await page.goto('/?year=1591&view=atlas')
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Read this chapter/ }).click()
+  await page.getByRole('button', { name: 'City life', exact: true }).click()
+  const stories = page.getByRole('region', { name: 'Stories and interesting facts for 1591' })
+  await expect(stories.locator('details')).toHaveCount(2)
+  await stories.locator('summary').first().click()
+  await expect(stories).toContainText('mosque')
+  await stories.getByRole('button', { name: 'Explore Charminar', exact: true }).first().click()
+  await expect(page.locator('.field-note-panel')).toContainText('Charminar')
+})
+
+test('an unmarked map point is navigable and shareable in the illustrated atlas', async ({ page }) => {
+  await page.goto('/?year=1591&view=atlas')
+  const mini = page.locator('.mini-map')
+  await mini.locator('svg').click({ position: { x: 90, y: 70 } })
+  await expect(page.locator('.destination-hud')).toBeVisible()
+  const url = new URL(page.url())
+  expect(url.searchParams.has('lat')).toBe(true)
+  expect(url.searchParams.has('lon')).toBe(true)
+  expect(url.searchParams.has('place')).toBe(false)
+  await page.reload()
+  await expect(page.locator('.destination-hud')).toBeVisible()
 })

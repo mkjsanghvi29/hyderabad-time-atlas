@@ -1,0 +1,133 @@
+.city-stories {
+  margin: 20px 0;
+  color: var(--cp-text);
+  font-family: inherit;
+}
+
+.city-stories-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.city-stories .city-stories-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.city-stories-heading > span {
+  color: var(--cp-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.city-stories .city-stories-hint {
+  margin: 4px 0 12px;
+  color: var(--cp-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.city-stories-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.city-story {
+  min-width: 0;
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  background: var(--cp-surface);
+}
+
+.city-story > summary {
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.city-story > summary::marker {
+  color: var(--cp-accent);
+}
+
+.city-story > summary:hover {
+  background: var(--cp-accent-soft);
+}
+
+.city-story[open] > summary {
+  border-radius: 16px 16px 0 0;
+  background: var(--cp-accent-soft);
+}
+
+.city-story > summary:focus-visible,
+.city-story-explore:focus-visible,
+.city-story-sources a:focus-visible {
+  outline: 2px solid var(--cp-accent);
+  outline-offset: 3px;
+}
+
+.city-story-content {
+  padding: 12px 16px 16px;
+}
+
+.city-stories .city-story-body {
+  margin: 0;
+  color: var(--cp-text);
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.city-story-explore {
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  background: var(--cp-surface-soft);
+  color: var(--cp-accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.city-story-explore:hover {
+  border-color: var(--cp-accent);
+  background: var(--cp-accent-soft);
+}
+
+.city-stories .city-story-source-label {
+  margin: 16px 0 4px;
+  color: var(--cp-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.city-story-sources {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 16px;
+  color: var(--cp-text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.city-story-sources a {
+  color: var(--cp-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
