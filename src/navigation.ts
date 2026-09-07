@@ -63,3 +63,14 @@ export function zoomFromUrl(search: string): number | undefined {
   const zoom = Number(value)
   return Number.isFinite(zoom) && zoom >= 1 && zoom <= 20 ? zoom : undefined
 }
+
+export function cityViewsFromUrl(search: string, protocol: string) {
+  const params = new URLSearchParams(search)
+  if (protocol === 'file:') return { modern: false, historical: false }
+  const historicalChapter = params.get('year') === '1998'
+  return {
+    modern: historicalChapter || params.get('view') !== 'atlas',
+    historical: historicalChapter && params.get('view') !== 'atlas'
+      && (params.get('layer') === 'satellite' || params.get('view') === 'geographic'),
+  }
+}

@@ -3,6 +3,10 @@
 ## Scope and evidence
 
 The app now distinguishes **illustrated reconstruction** from **geographic reference**.
+The 1998 chapter defaults to the illustrated 3D reconstruction; its dated satellite
+observation is an explicitly selected reference, not a replacement for a 3D city.
+The 1998 and 2025 rendering choices are independent, so exploring the earlier chapter
+does not switch off the modern geographic map.
 The former retains the original procedural historical city. The 2025 chapter's geographic
 mode uses the latest maps, as requested, rather than pretending that a live map is a frozen
 2025 survey. It streams OpenStreetMap-derived roads, labels and mapped building footprints
@@ -81,8 +85,11 @@ sample RGB tiles at the central city, western corridor and airport site returned
 
 The scenes report 0% scene-wide cloud cover. Their actual footprints cover central Hyderabad,
 the western corridor and the airport region. Their rectangular bounds include corner areas
-outside the rotated valid-data footprints. The raster source caps requests at zoom 13;
-further zoom magnifies existing pixels, not new detail.
+outside the rotated valid-data footprints. The raster source caps requests at zoom 13.
+The map camera also stops at zoom 13 (or a lower source limit) and stays top-down.
+Landmark selection, saved zooms, street-map transitions and neighbourhood navigation
+respect those limits. Close-up mode is disabled for imagery: enlarging or tilting a
+30 m pixel cannot reconstruct a building or a street-level scene.
 
 June and February are different seasons. Vegetation and colour differences cannot be
 attributed only to urban growth. The June 1998 observation also predates Cyber Towers'

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { coordinatesFromUrl, destinationsForYear, insideReconstruction, parseCoordinates, zoomFromUrl } from './navigation'
+import { cityViewsFromUrl, coordinatesFromUrl, destinationsForYear, insideReconstruction, parseCoordinates, zoomFromUrl } from './navigation'
 
 describe('city-wide navigation', () => {
+  it('defaults 1998 to 3D without turning off the modern map', () => {
+    expect(cityViewsFromUrl('?year=1998', 'https:')).toEqual({ modern: true, historical: false })
+    expect(cityViewsFromUrl('?year=1998&view=atlas', 'https:')).toEqual({ modern: true, historical: false })
+    expect(cityViewsFromUrl('?year=1998&layer=satellite', 'https:')).toEqual({ modern: true, historical: true })
+    expect(cityViewsFromUrl('?year=1998&view=atlas&layer=satellite', 'https:').historical).toBe(false)
+    expect(cityViewsFromUrl('?year=2025&layer=satellite', 'https:')).toEqual({ modern: true, historical: false })
+    expect(cityViewsFromUrl('?year=1591&view=atlas', 'https:').modern).toBe(false)
+    expect(cityViewsFromUrl('?year=1998&layer=satellite', 'file:')).toEqual({ modern: false, historical: false })
+  })
   it('accepts arbitrary coordinates without restricting travel to the landmark catalogue', () => {
     expect(parseCoordinates('17.2403, 78.4294')).toEqual([78.4294, 17.2403])
     expect(parseCoordinates('17.55;78.22')).toEqual([78.22, 17.55])

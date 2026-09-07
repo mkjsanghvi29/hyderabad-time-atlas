@@ -5,7 +5,7 @@ import type { StyleSpecification } from 'maplibre-gl'
 import {
   BUILDING_ESTIMATED_HEIGHT, BUILDING_LAYER_ID, OPEN_MAP_ATTRIBUTION, SATELLITE_SOURCE_ID,
   TERRAIN_ATTRIBUTION, TERRAIN_SOURCE_ID,
-  assertSatelliteScene, createSatelliteStyle, createStreetStyle, isRoadLayer,
+  assertSatelliteScene, createSatelliteStyle, createStreetStyle, geographicCameraLimits, isRoadLayer,
   layerVisibility, usesDatedImagery, withReferenceTerrain,
 } from './geographicStyle'
 import type { MapPalette, StreetAppearance } from './geographicStyle'
@@ -49,6 +49,13 @@ const style: StyleSpecification = {
 const visible: StreetAppearance = { showLabels: true, showRoads: true, showCity: true, timeOfDay: 'day' }
 
 describe('geographic source chronology and street style', () => {
+  it('keeps satellite cameras flat and within useful image resolution', () => {
+    expect(geographicCameraLimits(1998, 'satellite', satellite, false)).toEqual({ maxZoom: 12, maxPitch: 0 })
+    expect(geographicCameraLimits(1998, 'satellite', { ...satellite, maxZoom: 18 }, false)).toEqual({ maxZoom: 13, maxPitch: 0 })
+    expect(geographicCameraLimits(2025, 'satellite', { ...satellite, date: '2025-02-05', maxZoom: 13 }, false)).toEqual({ maxZoom: 13, maxPitch: 0 })
+    expect(geographicCameraLimits(2025, 'streets', null, false)).toEqual({ maxZoom: 20, maxPitch: 80 })
+    expect(geographicCameraLimits(2025, 'streets', null, true).maxPitch).toBe(0)
+  })
   it('uses current vectors only for the 2025 street-map chapter', () => {
     expect(usesDatedImagery(2025, 'streets')).toBe(false)
     for (const year of [1518, 1948, 1998]) expect(usesDatedImagery(year, 'streets')).toBe(true)

@@ -47,8 +47,9 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
   }
   const execute = (map: LibreMap, command: CameraCommand, immediate = false) => {
     const current = latest.current
-    const walking = current.cameraMode === 'walk'
-    const locate = (coordinates: Coordinates, zoom = walking ? 18 : 16) => {
+    const raster = usesDatedImagery(current.era.year, current.layer)
+    const walking = !raster && current.cameraMode === 'walk'
+    const locate = (coordinates: Coordinates, zoom = raster ? 12.5 : walking ? 18 : 16) => {
       if (!validCoordinates(coordinates)) {
         reportError('That destination has invalid longitude or latitude coordinates.')
         return
@@ -56,7 +57,7 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
       cameraApplied.current = { map, mode: current.cameraMode }
       map.flyTo({
         center: [...coordinates], zoom: Math.min(zoom, map.getMaxZoom()),
-        pitch: walking ? 74 : usesDatedImagery(current.era.year, current.layer) ? 0 : 52,
+        pitch: raster ? 0 : walking ? 74 : 52,
         duration: immediate ? 0 : motionDuration(1100),
       })
     }
@@ -79,7 +80,7 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
         cameraApplied.current = { map, mode: current.cameraMode }
         map.fitBounds(CITY_MAP_BOUNDS, { padding: 48, pitch: 0, bearing: 0, duration: immediate ? 0 : motionDuration(1000) })
         break
-      case 'zoom': map.zoomTo(map.getZoom() + (command.direction === 'in' ? 1 : -1), { duration: immediate ? 0 : motionDuration(240) }); break
+      case 'zoom': map.zoomTo(Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + (command.direction === 'in' ? 1 : -1))), { duration: immediate ? 0 : motionDuration(240) }); break
       case 'move': {
         const distance = walking ? 80 : 160
         const offset: [number, number] = command.direction === 'left' ? [-distance, 0]
@@ -135,7 +136,7 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
       if (pending.length) pending.forEach((command) => commandRef.current(loaded, command, true))
       else if (latest.current.destination) commandRef.current(loaded, { type: 'locate', coordinates: latest.current.destination, zoom: latest.current.destinationZoom })
       else if (latest.current.selectedId) commandRef.current(loaded, { type: 'focus', id: latest.current.selectedId })
-      else if (latest.current.cameraMode === 'walk') {
+      else if (latest.current.cameraMode === 'walk' && !usesDatedImagery(latest.current.era.year, latest.current.layer)) {
         loaded.jumpTo({ pitch: 74, zoom: Math.min(18, loaded.getMaxZoom()) })
       }
     },
@@ -200,9 +201,10 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
     if (!map) return
     if (cameraApplied.current?.map === map && cameraApplied.current.mode === props.cameraMode) return
     cameraApplied.current = { map, mode: props.cameraMode }
-    const walking = props.cameraMode === 'walk'
+    const raster = usesDatedImagery(props.era.year, props.layer)
+    const walking = !raster && props.cameraMode === 'walk'
     map.easeTo({
-      pitch: walking ? 74 : usesDatedImagery(props.era.year, props.layer) ? 0 : 48,
+      pitch: raster ? 0 : walking ? 74 : 48,
       ...(walking ? { zoom: Math.min(Math.max(map.getZoom(), 17.5), map.getMaxZoom()) } : {}),
       duration: motionDuration(450),
     })

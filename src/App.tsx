@@ -12,7 +12,7 @@ import GeographicScene from './GeographicScene'
 import GeographicOverview from './GeographicOverview'
 import CityNavigator from './CityNavigator'
 import { MAP_REFERENCES, SATELLITE_SCENES } from './mapEvidence'
-import { coordinatesFromUrl, insideReconstruction, validCoordinates, zoomFromUrl } from './navigation'
+import { cityViewsFromUrl, coordinatesFromUrl, insideReconstruction, validCoordinates, zoomFromUrl } from './navigation'
 import type { GeographicLayer } from './mapTypes'
 import { cityStatistics } from './cityStatistics'
 import { EXPEDITIONS, goalsForVisit, loadExpeditions, saveExpeditions } from './expeditions'
@@ -65,7 +65,7 @@ export default function App() {
   const [completedGoals, setCompletedGoals] = useState(savedExpedition.completed)
   const [progressWarning, setProgressWarning] = useState(savedExpedition.warning)
   const [expeditionStarted, setExpeditionStarted] = useState(false)
-  const [preferGeographic, setPreferGeographic] = useState(() => location.protocol !== 'file:' && new URLSearchParams(location.search).get('view') !== 'atlas')
+  const [geographicViews, setGeographicViews] = useState(() => cityViewsFromUrl(location.search, location.protocol))
   const [geographicLayer, setGeographicLayer] = useState<GeographicLayer>(() => new URLSearchParams(location.search).get('layer') === 'satellite' ? 'satellite' : 'streets')
   const [destination, setDestination] = useState<Coordinates | null>(() => coordinatesFromUrl(location.search))
   const [destinationLabel, setDestinationLabel] = useState('Your chosen location')
@@ -80,9 +80,11 @@ export default function App() {
   const cityMapDialog = useRef<HTMLDialogElement>(null)
   const era = ERAS[eraIndex]
   const modern = era.year >= 1998
-  const geographic = modern && preferGeographic
+  const preferGeographic = geographicViews.modern
+  const geographic = modern && (era.year === 1998 ? geographicViews.historical : preferGeographic)
   const satellite = SATELLITE_SCENES[era.year] ?? null
   const activeLayer: GeographicLayer = era.year === 1998 ? 'satellite' : geographicLayer
+  const satelliteMap = geographic && activeLayer === 'satellite'
   const life = CITY_LIFE[eraIndex]
   const expedition = EXPEDITIONS[eraIndex]
   const chapterDiscoveries = expedition.goals.filter((goal) => completedGoals.has(goal.id)).length
@@ -111,7 +113,7 @@ export default function App() {
       url.searchParams.delete('lat')
       url.searchParams.delete('zoom')
     }
-    if (!preferGeographic) url.searchParams.set('view', 'atlas')
+    if (modern ? !geographic : !preferGeographic) url.searchParams.set('view', 'atlas')
     else url.searchParams.delete('view')
     if (modern && geographic && activeLayer === 'satellite') url.searchParams.set('layer', 'satellite')
     else url.searchParams.delete('layer')
@@ -162,6 +164,7 @@ export default function App() {
 
   function changeEra(index: number) {
     setEraIndex(index)
+    if (ERAS[index].year === 1998 && geographicViews.historical) setCameraMode('orbit')
     const keepPlace = pinPlace && selected && selected.visibleFrom <= ERAS[index].year
     if (!keepPlace) {
       setSelectedId(null)
@@ -216,7 +219,7 @@ export default function App() {
     setDestination(null)
     setPinPlace(false)
     setTourIndex(null)
-    setCameraMode('walk')
+    setCameraMode(satelliteMap ? 'orbit' : 'walk')
     recordDistrict(id)
     setMobilePanel(false)
     scene.current?.travel(id)
@@ -245,7 +248,8 @@ export default function App() {
   }
 
   function switchGeography(enabled: boolean) {
-    setPreferGeographic(enabled)
+    setGeographicViews((current) => ({ ...current, [era.year === 1998 ? 'historical' : 'modern']: enabled }))
+    if (enabled && activeLayer === 'satellite') setCameraMode('orbit')
     setMapError('')
     setMapView(null)
     setSceneStatus('loading')
@@ -253,6 +257,13 @@ export default function App() {
       setDestination(null)
       setNotice('Returned to the smaller, illustrated reconstruction.')
     }
+
+  }
+
+  function chooseGeographicLayer(layer: GeographicLayer) {
+    setGeographicLayer(layer)
+    setMapError('')
+    if (layer === 'satellite') setCameraMode('orbit')
   }
 
   function resetView(region = false) {
@@ -361,10 +372,11 @@ export default function App() {
             <div className="year-display">{era.year}<span>CE</span></div>
             {modern && <div className="geographic-options">
               <div className="geography-switch" aria-label="City rendering">
-                <button className="quiet-button" aria-pressed={geographic} onClick={() => switchGeography(true)}>{era.year === 1998 ? '1998 satellite map' : 'Geographic city'}</button>
+                <button className="quiet-button" aria-pressed={geographic} onClick={() => switchGeography(true)}>{era.year === 1998 ? '1998 satellite reference' : 'Geographic city'}</button>
                 <button className="quiet-button" aria-pressed={!geographic} onClick={() => switchGeography(false)}>Illustrated atlas</button>
               </div>
               <p className="geography-note">{geographic ? activeLayer === 'streets' ? 'Latest mapped streets and building footprints, with terrain. Not every building is mapped; heights may be estimated. Navigate to any point, not only the pins.' : `${satellite?.date ?? era.year} satellite observation${satellite ? ` · ${satellite.resolution}` : ''}. ${era.year === 1998 ? 'No modern streets or later airport are projected into this historical image.' : 'A dated city-growth reference, not today’s street map.'}` : 'Original procedural reconstruction. Buildings and streets are illustrative, not a surveyed city map.'}</p>
+              {satelliteMap && <p className="geography-note">Top-down city-growth reference only. Zoom is limited to avoid enlarging 30 m pixels into a false street view. Choose Illustrated atlas for 3D exploration.</p>}
               {geographic && activeLayer === 'satellite' && <p className="geography-note">{era.year === 1998 ? 'This June observation predates Cyber Towers’ November opening. Markers locate sites; they do not prove a finished building existed in the image.' : 'February 2025 imagery and June 1998 imagery are different seasons. Zooming in enlarges pixels; it cannot reveal finer buildings.'}</p>}
               <button className="quiet-button street-start" onClick={() => setCityMapOpen(true)}><Icon name="compass" />Search or choose any location</button>
             </div>}
@@ -378,7 +390,7 @@ export default function App() {
               <span className="eyebrow">THE CITY IS CHANGING</span>
               <ul className="changes-list">{era.changes.map((change, i) => <li key={change}><span>{String(i + 1).padStart(2, '0')}</span><p>{change}</p></li>)}</ul>
               <button className="primary-button tour-start" onClick={() => tourStep(0)} disabled={!tour.length}><Icon name="play" />Explore this chapter<span>{tour.length} stops</span></button>
-              <button className="quiet-button street-start" onClick={() => visitDistrict(era.year < 1591 ? 'golconda-town' : 'old-city')}><Icon name="walk" />Walk the neighbourhood</button>
+              <button className="quiet-button street-start" onClick={() => visitDistrict(era.year < 1591 ? 'golconda-town' : 'old-city')}><Icon name="walk" />{satelliteMap ? 'View the neighbourhood on the map' : 'Walk the neighbourhood'}</button>
               <button className="text-button source-inline" onClick={() => setSourcesOpen(true)}>History, not guesswork <Icon name="arrow" /></button>
             </> : tab === 'life' ? <CityLifePanel story={life} districts={districts} explored={exploredDistricts} onVisit={visitDistrict} onLandmark={focusPlace} onSources={() => setSourcesOpen(true)} />
               : tab === 'challenges' ? <ExpeditionPanel expedition={expedition} completed={completedGoals} warning={progressWarning}
@@ -400,8 +412,8 @@ export default function App() {
 
         <div className="scene-toolbar">
           <div className="tool-group" aria-label="Camera navigation">
-            <button className={cameraMode === 'orbit' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'orbit'} onClick={() => setCameraMode('orbit')}><Icon name="orbit" />Orbit</button>
-            <button className={cameraMode === 'walk' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'walk'} onClick={() => setCameraMode('walk')}><Icon name="walk" />{geographic ? 'Close-up' : 'Street view'}</button>
+            <button className={cameraMode === 'orbit' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'orbit'} onClick={() => setCameraMode('orbit')}><Icon name="orbit" />{satelliteMap ? 'Map view' : 'Orbit'}</button>
+            <button className={cameraMode === 'walk' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'walk'} disabled={satelliteMap} title={satelliteMap ? '30 m satellite imagery is an overview, not a street-level view' : undefined} onClick={() => setCameraMode('walk')}><Icon name="walk" />{geographic ? 'Close-up' : 'Street view'}</button>
           </div>
           <button className="tool-button layers-toggle" aria-expanded={layersOpen} onClick={() => setLayersOpen(!layersOpen)}><Icon name="layers" />Layers</button>
           {layersOpen && <div className="layers-panel">
@@ -409,7 +421,7 @@ export default function App() {
             <label><input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />Landmark names</label>
             <label><input type="checkbox" checked={showCity} onChange={(e) => setShowCity(e.target.checked)} disabled={geographic && activeLayer === 'satellite'} />{geographic ? 'Mapped 3D buildings' : 'Interpretive city fabric'}</label>
             <label><input type="checkbox" checked={showRoads} onChange={(e) => setShowRoads(e.target.checked)} disabled={geographic && activeLayer === 'satellite'} />{geographic ? 'Mapped streets' : 'Schematic streets'}</label>
-            {geographic && era.year === 2025 && satellite && <div className="geography-switch"><button className="quiet-button" aria-pressed={activeLayer === 'streets'} onClick={() => setGeographicLayer('streets')}>Latest street map</button><button className="quiet-button" aria-pressed={activeLayer === 'satellite'} onClick={() => setGeographicLayer('satellite')}>2025 satellite</button></div>}
+            {geographic && era.year === 2025 && satellite && <div className="geography-switch"><button className="quiet-button" aria-pressed={activeLayer === 'streets'} onClick={() => chooseGeographicLayer('streets')}>Latest street map</button><button className="quiet-button" aria-pressed={activeLayer === 'satellite'} onClick={() => chooseGeographicLayer('satellite')}>2025 satellite</button></div>}
             <p>{geographic ? activeLayer === 'satellite' ? 'Dated Landsat imagery at 30 m native resolution. Zooming does not add detail; street and building overlays are disabled.' : 'OpenStreetMap-derived cartography. Footprint coverage and building heights vary. Close-up is an oblique map, not street-level photography.' : 'No survey data or historical flood boundary is implied.'}</p>
           </div>}
         </div>
@@ -430,7 +442,7 @@ export default function App() {
             <div className="camera-buttons">
               <button aria-label="Reset aerial view" title="Reset aerial view" onClick={() => resetView()}><Icon name="home" /></button>
               <button aria-label="Show metropolitan overview" title="Show metropolitan overview" onClick={() => resetView(true)}><Icon name="compass" /></button>
-              <button aria-label="Zoom in" onClick={() => scene.current?.zoom('in')}>+</button>
+              <button aria-label="Zoom in" disabled={satelliteMap && !!satellite && !!mapView && mapView.zoom >= Math.min(13, satellite.maxZoom) - .001} title={satelliteMap ? 'Zoom is limited by the satellite image resolution' : undefined} onClick={() => scene.current?.zoom('in')}>+</button>
               <button aria-label="Zoom out" onClick={() => scene.current?.zoom('out')}>−</button>
             </div>
           </div>

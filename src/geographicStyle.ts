@@ -86,6 +86,16 @@ export function createSatelliteStyle(year: number, scene: SatelliteScene | null,
   }
 }
 
+export function geographicCameraLimits(year: number, layer: GeographicLayer, scene: SatelliteScene | null, overview: boolean) {
+  const raster = usesDatedImagery(year, layer)
+  let maxZoom = 20
+  if (raster) {
+    assertSatelliteScene(year, scene)
+    maxZoom = Math.min(13, scene.maxZoom)
+  }
+  return { maxZoom, maxPitch: overview || raster ? 0 : 80 }
+}
+
 export function withReferenceTerrain(style: StyleSpecification, year: number, overview: boolean): StyleSpecification {
   if (year !== 2025 || overview) return style
   return {
@@ -413,14 +423,15 @@ export function useGeographicMap(options: GeographicMapOptions) {
         style = withReferenceTerrain(style, initial.year, initial.overview)
         if (disposed) return
         const previous = rememberedView.current
+        const limits = geographicCameraLimits(initial.year, initial.layer, initial.satellite, initial.overview)
         map = new LibreMap({
           container, style, attributionControl: false,
           center: previous ? [...previous.center] : [...CITY_MAP_CENTER],
-          zoom: previous?.zoom ?? (initial.overview ? 9 : 12),
+          zoom: Math.min(previous?.zoom ?? (initial.overview ? 9 : 12), limits.maxZoom),
           bearing: previous?.bearing ?? 0,
           pitch: initial.overview || raster ? 0 : 48,
-          maxZoom: raster && initial.satellite ? Math.min(20, initial.satellite.maxZoom + 3) : 20,
-          minZoom: 1, maxPitch: initial.overview ? 0 : 80,
+          maxZoom: limits.maxZoom,
+          minZoom: 1, maxPitch: limits.maxPitch,
           renderWorldCopies: false, canvasContextAttributes: { antialias: !initial.overview },
           fadeDuration: motionDuration(200),
         })
@@ -460,6 +471,8 @@ export function useGeographicMap(options: GeographicMapOptions) {
           rememberedView.current = view
           canvas.dataset.cameraLongitude = String(view.center[0])
           canvas.dataset.cameraLatitude = String(view.center[1])
+          canvas.dataset.cameraZoom = String(view.zoom)
+          canvas.dataset.cameraPitch = String(current.getPitch())
           canvas.dataset.center = view.center.join(',')
           container.dataset.center = view.center.join(',')
           latest.current.onMoveEnd?.(current)

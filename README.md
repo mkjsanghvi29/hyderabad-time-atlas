@@ -20,7 +20,7 @@ stream public map data; the illustrated atlas also works offline.
 ## Pick your adventure
 
 - **Time traveller:** eight chapters, from Golconda in **1518** to metropolitan Hyderabad in **2025**.
-- **City-growth spotter:** compare real **1998 and 2025 Landsat observations**, or switch to the latest street map. Historical imagery is 30 m resolution, not street photography.
+- **City-growth spotter:** 1998 opens as an illustrated 3D city. Choose **1998 satellite reference** to compare real **1998 and 2025 Landsat observations**. These are zoom-limited, top-down overviews—not street photography.
 - **Street explorer:** discover mapped streets, building footprints and terrain. Search Hyderabad's landmarks, parks, streets and other places by name—or choose **any point**. The handful of atlas pins are not the limits.
 - **History detective:** tackle **24 mini-challenges**, follow field hints and collect **eight chapter badges**. Mistakes cost nothing; progress stays in your browser.
 - **Pattern spotter:** keep a monument selected as time changes. Notice changing buildings, city milestones and source-linked population benchmarks.
