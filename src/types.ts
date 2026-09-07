@@ -47,6 +47,12 @@ export type MapView = {
   bearing: number
 }
 
+export type GuidedVisit = {
+  requestId: number
+  year: number
+  target: { kind: 'landmark' | 'district'; id: string }
+}
+
 export type AtlasSceneHandle = {
   focus: (landmarkId: string) => void
   travel: (districtId: string) => void
@@ -70,4 +76,8 @@ export type AtlasSceneProps = {
   onStatus: (status: SceneStatus) => void
   onDistrictChange?: (districtId: string) => void
   onViewChange?: (view: MapView) => void
+  guidedVisit?: GuidedVisit | null
+  onGuidedArrival?: (requestId: number) => void
+  onExplore?: () => void
+  cinematicMotion?: boolean
 }

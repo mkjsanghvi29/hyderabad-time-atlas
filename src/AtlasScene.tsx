@@ -33,6 +33,7 @@ import { createMaterials, disposeMaterials, readPalette, setNightMaterials, type
 import { buildWorld, createSelectionRing, surfaceHeight, WORLD_BOUNDS, type World } from './scene/world'
 
 type Flight = {
+  guidedRequestId?: number
   startTime: number
   duration: number
   fromPosition: Vector3
@@ -42,6 +43,7 @@ type Flight = {
 }
 
 type Runtime = {
+  pendingGuidedArrival?: number
   renderer: WebGLRenderer
   scene: Scene
   camera: PerspectiveCamera
@@ -207,6 +209,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
   const onSelectRef = useRef(props.onSelect)
   const onStatusRef = useRef(props.onStatus)
   const propsRef = useRef(props)
+  const guidedApplied = useRef<number | null>(null)
   onSelectRef.current = props.onSelect
   onStatusRef.current = props.onStatus
   propsRef.current = props
@@ -216,7 +219,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
     [props.era.year, props.landmarks],
   )
 
-  function beginFlight(position: Vector3, target: Vector3, duration = 850): void {
+  function beginFlight(position: Vector3, target: Vector3, duration = 850, guidedRequestId?: number): void {
     const runtime = runtimeRef.current
     if (!runtime || runtime.contextLost) return
     clampToWorld(position)
@@ -228,10 +231,12 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
       runtime.camera.position.copy(position)
       runtime.controls.target.copy(target)
       runtime.flight = null
+      runtime.pendingGuidedArrival = guidedRequestId
       updateCamera(runtime)
       return
     }
     runtime.flight = {
+      guidedRequestId,
       startTime: performance.now(),
       duration,
       fromPosition: runtime.camera.position.clone(),
@@ -241,7 +246,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
     }
   }
 
-  function focusLandmark(landmarkId: string): void {
+  function focusLandmark(landmarkId: string, guidedRequestId?: number): void {
     const runtime = runtimeRef.current
     const landmark = runtime?.world?.landmarks.get(landmarkId)
     if (!runtime || !landmark) return
@@ -258,7 +263,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
       target.z + Math.cos(bearing) * distance,
     )
     if (walking) position.y = surfaceHeight(position.x, position.z, propsRef.current.era.year >= 1563) + WALK_EYE_HEIGHT
-    beginFlight(position, target, 900)
+    beginFlight(position, target, 900, guidedRequestId)
   }
 
   function home(): void {
@@ -278,7 +283,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
     beginFlight(REGION_POSITION.clone(), REGION_TARGET.clone(), 900)
   }
 
-  function travel(districtId: string): void {
+  function travel(districtId: string, guidedRequestId?: number): void {
     const runtime = runtimeRef.current
     const district = CITY_DISTRICTS.find((entry) => entry.id === districtId)
     if (!runtime?.world || !district) return
@@ -292,7 +297,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
     const direction = new Vector3(road.b[0] - road.a[0], 0, road.b[1] - road.a[1]).normalize()
     runtime.cameraMode = 'walk'
     runtime.controls.enabled = false
-    beginFlight(position, position.clone().addScaledVector(direction, 2), 900)
+    beginFlight(position, position.clone().addScaledVector(direction, 2), 900, guidedRequestId)
     runtime.renderer.domElement.focus({ preventScroll: true })
   }
 
@@ -308,6 +313,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
   }
 
   function zoom(direction: 'in' | 'out'): void {
+    propsRef.current.onExplore?.()
     const runtime = runtimeRef.current
     if (!runtime || runtime.contextLost) return
     if (runtime.cameraMode === 'walk' && !runtime.flight) {
@@ -322,6 +328,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
   }
 
   function move(direction: 'forward' | 'backward' | 'left' | 'right', faster = false, step = 1): void {
+    propsRef.current.onExplore?.()
     const runtime = runtimeRef.current
     if (!runtime || runtime.contextLost) return
     runtime.flight = null
@@ -560,7 +567,14 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
         const eased = easeInOutCubic(progress)
         camera.position.lerpVectors(runtime.flight.fromPosition, runtime.flight.toPosition, eased)
         controls.target.lerpVectors(runtime.flight.fromTarget, runtime.flight.toTarget, eased)
-        if (progress >= 1) runtime.flight = null
+        if (progress >= 1) {
+          runtime.pendingGuidedArrival = runtime.flight.guidedRequestId
+          runtime.flight = null
+        }
+      }
+      if (propsRef.current.cinematicMotion && !runtime.flight && !runtime.reducedMotion && runtime.cameraMode === 'orbit') {
+        const offset = camera.position.clone().sub(controls.target).applyAxisAngle(camera.up, delta * .018)
+        camera.position.copy(controls.target).add(offset)
       }
       updateCamera(runtime)
       clampToWorld(controls.target)
@@ -583,7 +597,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
         camera.updateProjectionMatrix()
       }
       if (runtime.world) {
-        runtime.world.living.activity.visible = propsRef.current.showCity && camera.position.y < 40
+        runtime.world.living.activity.visible = propsRef.current.showCity && (camera.position.y < 40 || !!propsRef.current.cinematicMotion)
         if (!runtime.reducedMotion && runtime.world.living.activity.visible) runtime.world.living.update(elapsed)
         if (runtime.cameraMode === 'walk' && !runtime.flight) {
           const district = nearestDistrict(unproject(camera.position.x, camera.position.z), propsRef.current.era.year)
@@ -617,6 +631,15 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
       renderer.domElement.dataset.geometries = String(renderer.info.memory.geometries)
       renderer.domElement.dataset.cameraPosition = camera.position.toArray().map((value) => value.toFixed(3)).join(',')
       renderer.domElement.dataset.cameraTarget = controls.target.toArray().map((value) => value.toFixed(3)).join(',')
+      renderer.domElement.dataset.cinematic = String(!!propsRef.current.cinematicMotion && !runtime.reducedMotion)
+      if (runtime.pendingGuidedArrival !== undefined && !runtime.flight) {
+        const id = runtime.pendingGuidedArrival
+        runtime.pendingGuidedArrival = undefined
+        if (propsRef.current.guidedVisit?.requestId === id) {
+          renderer.domElement.dataset.guidedArrival = String(id)
+          propsRef.current.onGuidedArrival?.(id)
+        }
+      }
       if (!runtime.readyReported && runtime.world) {
         runtime.readyReported = true
         onStatusRef.current('ready')
@@ -624,6 +647,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
     }
 
     const pointerDown = (event: PointerEvent) => {
+      propsRef.current.onExplore?.()
       runtime.flight = null
       if (!event.isPrimary || event.button !== 0) {
         runtime.pointerDown = null
@@ -693,6 +717,7 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
       runtime.fastMove = event.shiftKey
     }
     const wheel = (event: WheelEvent) => {
+      propsRef.current.onExplore?.()
       runtime.flight = null
       if (runtime.cameraMode !== 'walk') return
       event.preventDefault()
@@ -719,13 +744,14 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
       runtime.reducedMotion = event.matches
       controls.enableDamping = !event.matches
       if (event.matches && runtime.flight) {
+        runtime.pendingGuidedArrival = runtime.flight.guidedRequestId
         camera.position.copy(runtime.flight.toPosition)
         controls.target.copy(runtime.flight.toTarget)
         runtime.flight = null
         updateCamera(runtime)
       }
     }
-    const orbitStarted = () => { runtime.flight = null }
+    const orbitStarted = () => { propsRef.current.onExplore?.(); runtime.flight = null }
     controls.addEventListener('start', orbitStarted)
     motionPreference.addEventListener('change', motionChanged)
     renderer.domElement.addEventListener('pointerdown', pointerDown)
@@ -910,6 +936,22 @@ const AtlasScene = forwardRef<AtlasSceneHandle, AtlasSceneProps>(function AtlasS
       for (const button of labelsRef.current.values()) button.style.display = 'none'
     }
   }, [props.showLabels])
+
+  useEffect(() => {
+    const runtime = runtimeRef.current
+    const visit = props.guidedVisit
+    if (!runtime) return
+    if (!visit) {
+      if (runtime.flight?.guidedRequestId !== undefined) runtime.flight = null
+      runtime.pendingGuidedArrival = undefined
+      guidedApplied.current = null
+      return
+    }
+    if (visit.year !== props.era.year || guidedApplied.current === visit.requestId || !runtime.world) return
+    guidedApplied.current = visit.requestId
+    if (visit.target.kind === 'landmark') focusLandmark(visit.target.id, visit.requestId)
+    else travel(visit.target.id, visit.requestId)
+  }, [props.guidedVisit, props.era.year])
 
   return (
     <div ref={containerRef} style={rootStyle} aria-label="Hyderabad time atlas 3D world">

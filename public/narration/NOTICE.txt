@@ -1,0 +1,50 @@
+HYDERABAD TIME ATLAS - AUDIO NOTICE
+
+The documentary scripts are original writing for this atlas. Every chapter
+uses the same synthetic British male stock voice, Kokoro bm_george. This is
+not a recording of a real narrator, a celebrity performance or endorsement,
+or a historical recording. Names and place-name pronunciations are synthetic.
+
+Speech is generated locally with kokoro-js 1.2.1 and the fp32
+onnx-community/Kokoro-82M-v1.0-ONNX model at revision
+1939ad2a8e416c0acfeecc08a694d14ef25f2231. The model and Kokoro library are
+released under Apache License 2.0. Their code, weights and runtime are not
+included in the browser application. Model/licensing provenance:
+
+https://github.com/hexgrad/kokoro
+https://github.com/hexgrad/kokoro/blob/main/LICENSE
+https://github.com/hexgrad/kokoro/tree/main/kokoro.js
+https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
+https://huggingface.co/hexgrad/Kokoro-82M
+https://www.apache.org/licenses/LICENSE-2.0
+
+The soundtrack is an original, procedural Web Audio composition of warm
+pads, sparse plucks and filtered generated noise. It uses no external audio
+samples and does not reproduce a known melody. All music and sonic textures
+are illustrative; they are not evidence of how a historical place sounded.
+Historical sources for each chapter appear with its transcript in the atlas.
+
+REGENERATING THE NARRATION (from the project root)
+
+Requires Node 22.21 or newer, npm, ffmpeg and ffprobe on PATH.
+  npm ci --prefix tools/narration
+  npm run preview --prefix tools/narration
+  npm run generate --prefix tools/narration
+  npm run validate --prefix tools/narration
+
+Optional environment variables: TTS_CACHE_DIR, FFMPEG, FFPROBE.
+The preview is written to tools/narration/.work/ and is never auto-played.
+Models default to tools/narration/.cache/models/ and are not published.
+Both directories and tools/narration/node_modules/ must stay outside Git.
+The normal site build does not install or run these synthesis dependencies.
+
+The generator reads complete speechText (when supplied) or narration from
+src/audioTourData.ts. It splits at sentence boundaries, checks actual model
+token counts before inference, splits oversized sentences without dropping
+words, and rejoins all speech in order with short pauses. MP3 is mono, 24 kHz,
+96 kbit/s, normalized toward -18 LUFS with a -2.5 dBTP encoding target.
+Generated clips are measured for duration, pace, loudness and long silences.
+Content/settings/dependency fingerprints plus audio SHA-256 hashes make
+generation resumable; unchanged clips are rechecked rather than resynthesized.
+tools/narration/manifest.json records the resulting measurements.
+src/audioTourAssets.ts is generated from measured, not estimated, durations.

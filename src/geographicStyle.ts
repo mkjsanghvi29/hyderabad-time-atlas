@@ -365,6 +365,8 @@ type GeographicMapOptions = {
   onReady?: (map: LibreMap) => void
   onLoading?: () => void
   onMoveEnd?: (map: LibreMap) => void
+  onIdle?: (map: LibreMap) => void
+  onExplore?: () => void
   onNavigate: (coordinates: Coordinates) => void
   onError?: (message: string) => void
 }
@@ -483,6 +485,7 @@ export function useGeographicMap(options: GeographicMapOptions) {
           latest.current.onNavigate([point.lng, point.lat])
         })
         current.on('idle', () => {
+          if (disposed || failed) return
           canvas.dataset.tilesLoaded = String(current.areTilesLoaded())
           if (current.getLayer(BUILDING_LAYER_ID)) {
             canvas.dataset.mappedBuildings = String(current.queryRenderedFeatures({ layers: [BUILDING_LAYER_ID] }).length)
@@ -494,8 +497,12 @@ export function useGeographicMap(options: GeographicMapOptions) {
             clearTimeout(readyTimer)
             latest.current.onReady?.(current)
           }
+          latest.current.onIdle?.(current)
         })
-        current.on('movestart', () => { canvas.dataset.tilesLoaded = 'false' })
+        current.on('movestart', (event) => {
+          canvas.dataset.tilesLoaded = 'false'
+          if ('originalEvent' in event && event.originalEvent) latest.current.onExplore?.()
+        })
         current.on('error', (event) => fail(`Geographic map data could not be loaded: ${event.error.message}`))
         current.on('webglcontextlost', () => fail('The geographic map lost its graphics context. Retry the map to continue.'))
         resizeObserver = new ResizeObserver(() => {

@@ -39,6 +39,8 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
   const selectedAtLoad = useRef<string | null>(null)
   const cameraApplied = useRef<{ map: LibreMap; mode: AtlasSceneProps['cameraMode'] } | null>(null)
   const reportedError = useRef(false)
+  const pendingGuided = useRef<{ id: number; coordinates: Coordinates } | null>(null)
+  const guidedApplied = useRef<number | null>(null)
 
   const reportError = (message: string) => {
     reportedError.current = true
@@ -113,8 +115,8 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
     locate: (coordinates, zoom) => dispatch({ type: 'locate', coordinates, zoom }),
     home: () => dispatch({ type: 'home' }),
     region: () => dispatch({ type: 'region' }),
-    zoom: (direction) => dispatch({ type: 'zoom', direction }),
-    move: (direction) => dispatch({ type: 'move', direction }),
+    zoom: (direction) => { latest.current.onExplore?.(); dispatch({ type: 'zoom', direction }) },
+    move: (direction) => { latest.current.onExplore?.(); dispatch({ type: 'move', direction }) },
   }), [])
 
   const { containerRef, map } = useGeographicMap({
@@ -145,6 +147,16 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
     },
     onError: reportError,
     onNavigate: (coordinates) => latest.current.onNavigate(coordinates),
+    onExplore: () => latest.current.onExplore?.(),
+    onIdle: (current) => {
+      const pending = pendingGuided.current
+      if (!pending || latest.current.guidedVisit?.requestId !== pending.id) return
+      const center = current.getCenter()
+      if (Math.abs(center.lng - pending.coordinates[0]) > .0002 || Math.abs(center.lat - pending.coordinates[1]) > .0002) return
+      pendingGuided.current = null
+      current.getCanvas().dataset.guidedArrival = String(pending.id)
+      latest.current.onGuidedArrival?.(pending.id)
+    },
     onMoveEnd: (current) => {
       const view = readMapView(current)
       latest.current.onViewChange?.(view)
@@ -219,6 +231,7 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
       const directions = { w: 'forward', s: 'backward', a: 'left', d: 'right' } as const
       const key = event.key.toLowerCase()
       if (key === 'w' || key === 's' || key === 'a' || key === 'd') {
+        latest.current.onExplore?.()
         event.preventDefault()
         event.stopPropagation()
         commandRef.current(map, { type: 'move', direction: directions[key] })
@@ -233,6 +246,41 @@ const GeographicScene = forwardRef<AtlasSceneHandle, GeographicSceneProps>(funct
       if (liveMap.current === map) liveMap.current = null
     }
   }, [map])
+
+  useEffect(() => {
+    if (!map) return
+    const visit = props.guidedVisit
+    if (!visit) {
+      if (pendingGuided.current) map.stop()
+      pendingGuided.current = null
+      guidedApplied.current = null
+      return
+    }
+    if (visit.year !== props.era.year || guidedApplied.current === visit.requestId) return
+    const target = visit.target.kind === 'landmark'
+      ? props.landmarks.find((place) => place.id === visit.target.id)
+      : districtsInEra(props.era.year).find((district) => district.id === visit.target.id)
+    if (!target) { reportError('The guided-tour destination is not available in this chapter.'); return }
+    guidedApplied.current = visit.requestId
+    pendingGuided.current = { id: visit.requestId, coordinates: target.coordinates }
+    commandRef.current(map, visit.target.kind === 'landmark'
+      ? { type: 'focus', id: visit.target.id } : { type: 'travel', id: visit.target.id })
+  }, [map, props.guidedVisit, props.era.year, props.landmarks])
+
+  useEffect(() => {
+    if (!map) return
+    const enabled = !!props.cinematicMotion && !usesDatedImagery(props.era.year, props.layer)
+      && !matchMedia('(prefers-reduced-motion: reduce)').matches
+    map.getCanvas().dataset.cinematic = String(enabled)
+    if (!enabled) return
+    let stopped = false
+    const rotate = () => {
+      if (!stopped) map.easeTo({ bearing: map.getBearing() + 6, duration: 12_000, easing: (value) => value })
+    }
+    map.on('moveend', rotate)
+    rotate()
+    return () => { stopped = true; map.off('moveend', rotate); map.stop() }
+  }, [map, props.cinematicMotion, props.era.year, props.layer])
 
   return (
     <div className="geographic-scene" data-engine="maplibre" data-era={props.era.year} data-layer={usesDatedImagery(props.era.year, props.layer) ? 'satellite' : 'streets'}>

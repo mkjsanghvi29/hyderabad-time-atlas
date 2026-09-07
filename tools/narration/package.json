@@ -1,0 +1,18 @@
+{
+  "name": "hyderabad-time-atlas-narration-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.21.0"
+  },
+  "scripts": {
+    "preview": "node --experimental-strip-types generate.mjs --preview",
+    "generate": "node --experimental-strip-types generate.mjs",
+    "validate": "node --experimental-strip-types generate.mjs --validate"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "kokoro-js": "1.2.1"
+  }
+}

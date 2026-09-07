@@ -19,6 +19,7 @@ stream public map data; the illustrated atlas also works offline.
 
 ## Pick your adventure
 
+- **Documentary traveller:** choose **Audio tour** for a narrated journey through all eight eras. Sixteen stops, one original male guide, a quiet ambient score, and gentle camera moves. Pause, skip, read the transcript—or leave the tour and explore freely.
 - **Time traveller:** eight chapters, from Golconda in **1518** to metropolitan Hyderabad in **2025**.
 - **City-growth spotter:** 1998 opens as an illustrated 3D city. Choose **1998 satellite reference** to compare real **1998 and 2025 Landsat observations**. These are zoom-limited, top-down overviews—not street photography.
 - **Street explorer:** discover mapped streets, building footprints and terrain. Search Hyderabad's landmarks, parks, streets and other places by name—or choose **any point**. The handful of atlas pins are not the limits.
@@ -70,6 +71,11 @@ npm run build
 Open **`dist/index.html`** for the illustrated offline edition. The historical models,
 stories and challenges are embedded. Geographic maps, imagery, elevation and external
 source links require internet access.
+
+Recorded narration loads one stop at a time, only after you choose to start. For offline
+audio, keep **`dist/narration/`** alongside the HTML file; the HTML alone contains the
+transcripts, not the recordings. Music is synthesized locally and has its own mute/volume
+controls. The voice is an original synthetic narrator, not a celebrity recording.
 
 In the modern geographic view, type a place name and press **Go** to search beyond the
 atlas collection. Submitted names go to Photon; typing and coordinate entry stay local.

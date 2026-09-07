@@ -11,6 +11,9 @@ import CityStats from './CityStats'
 import GeographicScene from './GeographicScene'
 import GeographicOverview from './GeographicOverview'
 import CityNavigator from './CityNavigator'
+import AudioTourPlayer from './AudioTourPlayer'
+import { useAudioTour } from './useAudioTour'
+import type { AudioTourStop } from './audioTourData'
 import { MAP_REFERENCES, SATELLITE_SCENES } from './mapEvidence'
 import { cityViewsFromUrl, coordinatesFromUrl, insideReconstruction, validCoordinates, zoomFromUrl } from './navigation'
 import type { GeographicLayer } from './mapTypes'
@@ -24,7 +27,7 @@ function initialEraIndex() {
   return index < 0 ? 1 : index
 }
 
-function Icon({ name }: { name: 'compass' | 'home' | 'layers' | 'book' | 'arrow' | 'walk' | 'orbit' | 'close' | 'play' }) {
+function Icon({ name }: { name: 'compass' | 'home' | 'layers' | 'book' | 'arrow' | 'walk' | 'orbit' | 'close' | 'play' | 'headphones' }) {
   const paths = {
     compass: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM16 8l-3 5-5 3 3-5 5-3Z',
     home: 'm3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10',
@@ -35,6 +38,7 @@ function Icon({ name }: { name: 'compass' | 'home' | 'layers' | 'book' | 'arrow'
     orbit: 'M20 4c4 4-3 14-10 16S1 17 4 11 16 0 20 4ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z',
     close: 'm6 6 12 12M18 6 6 18',
     play: 'm8 4 12 8-12 8V4Z',
+    headphones: 'M4 14v-3a8 8 0 0 1 16 0v3M4 13H2v7h5v-7H4ZM20 13h2v7h-5v-7h3Z',
   }
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
 }
@@ -78,6 +82,8 @@ export default function App() {
   const scene = useRef<AtlasSceneHandle>(null)
   const sourcesDialog = useRef<HTMLDialogElement>(null)
   const cityMapDialog = useRef<HTMLDialogElement>(null)
+  const eraTrack = useRef<HTMLDivElement>(null)
+  const audioTour = useAudioTour(visitAudioStop)
   const era = ERAS[eraIndex]
   const modern = era.year >= 1998
   const preferGeographic = geographicViews.modern
@@ -132,6 +138,16 @@ export default function App() {
   }, [cityMapOpen])
 
   useEffect(() => {
+    if (cityMapOpen || sourcesOpen) audioTour.pauseForExploration()
+  }, [cityMapOpen, sourcesOpen])
+
+  useEffect(() => {
+    const track = eraTrack.current
+    const active = track?.querySelector<HTMLElement>('.era-stop.active')
+    if (track && active) track.scrollTo({ left: active.offsetLeft - track.clientWidth / 2 + active.clientWidth / 2, behavior: 'instant' })
+  }, [eraIndex])
+
+  useEffect(() => {
     if (sceneStatus !== 'ready' || !destination) return
     if (!geographic && !insideReconstruction(destination)) {
       setNotice('This link points beyond the illustrated area. Use the 2025 geographic map to reach it.')
@@ -162,7 +178,8 @@ export default function App() {
     return () => window.removeEventListener('keydown', escapeImmersive)
   }, [])
 
-  function changeEra(index: number) {
+  function changeEra(index: number, fromAudio = false) {
+    if (!fromAudio) audioTour.pauseForExploration()
     setEraIndex(index)
     if (ERAS[index].year === 1998 && geographicViews.historical) setCameraMode('orbit')
     const keepPlace = pinPlace && selected && selected.visibleFrom <= ERAS[index].year
@@ -181,6 +198,7 @@ export default function App() {
   }
 
   function focusPlace(id: string, fromTour = false) {
+    audioTour.pauseForExploration()
     if (!fromTour) setTourIndex(null)
     setSelectedId(id)
     setDestination(null)
@@ -215,6 +233,7 @@ export default function App() {
   }
 
   function visitDistrict(id: string) {
+    audioTour.pauseForExploration()
     setSelectedId(null)
     setDestination(null)
     setPinPlace(false)
@@ -226,6 +245,7 @@ export default function App() {
   }
 
   function navigateAnywhere(coordinates: Coordinates, label = 'Your chosen location', zoom?: number) {
+    audioTour.pauseForExploration()
     if (!validCoordinates(coordinates)) {
       setNotice('Enter a valid latitude and longitude.')
       return
@@ -248,6 +268,7 @@ export default function App() {
   }
 
   function switchGeography(enabled: boolean) {
+    audioTour.pauseForExploration()
     setGeographicViews((current) => ({ ...current, [era.year === 1998 ? 'historical' : 'modern']: enabled }))
     if (enabled && activeLayer === 'satellite') setCameraMode('orbit')
     setMapError('')
@@ -261,12 +282,14 @@ export default function App() {
   }
 
   function chooseGeographicLayer(layer: GeographicLayer) {
+    audioTour.pauseForExploration()
     setGeographicLayer(layer)
     setMapError('')
     if (layer === 'satellite') setCameraMode('orbit')
   }
 
   function resetView(region = false) {
+    audioTour.pauseForExploration()
     setCameraMode('orbit')
     setSelectedId(null)
     setDestination(null)
@@ -282,6 +305,30 @@ export default function App() {
       onNavigate={navigateAnywhere} expanded={expanded} onError={setMapError} />
       : <Minimap large={expanded} landmarks={LANDMARKS} selectedId={selectedId} year={era.year}
         destination={destination} onSelect={focusPlace} onNavigate={navigateAnywhere} />
+  }
+
+  function visitAudioStop(stop: AudioTourStop) {
+    const index = ERAS.findIndex((item) => item.year === stop.year)
+    if (index < 0) { audioTour.fail('The tour chapter is not available.'); return }
+    changeEra(index, true)
+    setSelectedId(stop.target.kind === 'landmark' ? stop.target.id : null)
+    setActiveDistrictId(stop.target.kind === 'district' ? stop.target.id : null)
+    setCameraMode(stop.target.kind === 'district' && stop.year !== 2025 ? 'walk' : 'orbit')
+    setGeographicViews((views) => ({ ...views, historical: false, ...(stop.year === 2025 ? { modern: true } : {}) }))
+    setGeographicLayer('streets')
+    setCityMapOpen(false)
+    setMobilePanel(false)
+    setNoteCollapsed(true)
+    setPinPlace(false)
+    setTourIndex(null)
+    setExpeditionStarted(false)
+  }
+
+  function reportSceneStatus(status: SceneStatus) {
+    setSceneStatus(status)
+    if (status === 'unavailable' && audioTour.state.phase === 'travelling' && audioTour.state.visit?.year === era.year) {
+      audioTour.fail('The city view could not load for this stop. Retry the tour or read its transcript.')
+    }
   }
 
   function tourStep(index: number) {
@@ -325,7 +372,7 @@ export default function App() {
   }
 
   return (
-    <div className={`atlas-app ${immersive ? 'immersive' : ''} ${geographic ? 'geographic-mode' : ''}`}>
+    <div className={`atlas-app ${immersive ? 'immersive' : ''} ${geographic ? 'geographic-mode' : ''} ${audioTour.state.phase === 'playing' ? 'audio-tour-playing' : ''}`}>
       <a href="#chapter-panel" className="skip-link">Skip to accessible historical guide</a>
       <header className="masthead">
         <a className="brand" href={location.pathname} aria-label="Hyderabad Time Atlas home">
@@ -334,6 +381,7 @@ export default function App() {
         </a>
         <span className="masthead-description">One city. Five centuries. Countless stories.</span>
         <div className="masthead-actions">
+          <button className="quiet-button audio-tour-launch" aria-label="Open guided audio tour" onClick={() => audioTour.setOpen(true)}><Icon name="headphones" /><span>Audio tour</span></button>
           <span className="edition-tag">EXPLORER EDITION <b>01</b></span>
           <button className="quiet-button immersive-toggle" onClick={() => setImmersive(true)}><Icon name="compass" />Immersive view</button>
           <button className="quiet-button" onClick={() => setSourcesOpen(true)}><Icon name="book" /><span>Research &amp; sources</span></button>
@@ -346,17 +394,20 @@ export default function App() {
         <div className="world-viewport" aria-label="Interactive Hyderabad city scene">
           {geographic ? <GeographicScene key={`geographic-${mapReload}`} ref={scene} era={era} landmarks={LANDMARKS} selectedId={selected?.id ?? null}
             timeOfDay={timeOfDay} cameraMode={cameraMode} showCity={showCity} showLabels={showLabels}
-            showRoads={showRoads} onSelect={focusPlace} onStatus={setSceneStatus} onDistrictChange={recordDistrict}
+            showRoads={showRoads} onSelect={focusPlace} onStatus={reportSceneStatus} onDistrictChange={recordDistrict}
+            guidedVisit={audioTour.state.visit} onGuidedArrival={audioTour.arrive} onExplore={audioTour.pauseForExploration} cinematicMotion={audioTour.cinematic}
             onViewChange={setMapView} layer={activeLayer} satellite={satellite} destination={destination} destinationZoom={destinationZoom}
             onNavigate={navigateAnywhere} onError={setMapError} />
             : <AtlasScene ref={scene} era={era} landmarks={LANDMARKS} selectedId={selected?.id ?? null}
             timeOfDay={timeOfDay} cameraMode={cameraMode} showCity={showCity} showLabels={showLabels}
-            showRoads={showRoads} onSelect={focusPlace} onStatus={setSceneStatus} onDistrictChange={recordDistrict} />}
+            showRoads={showRoads} onSelect={focusPlace} onStatus={reportSceneStatus} onDistrictChange={recordDistrict}
+            guidedVisit={audioTour.state.visit} onGuidedArrival={audioTour.arrive} onExplore={audioTour.pauseForExploration} cinematicMotion={audioTour.cinematic} />}
           {sceneStatus === 'loading' && !mapError && <div className="scene-message" role="status"><span className="loading-orbit" />{geographic ? 'Loading geographic map data…' : 'Assembling the Deccan landscape…'}</div>}
           {sceneStatus === 'unavailable' && !geographic && <div className="scene-fallback"><span className="eyebrow">MAP MODE</span><h2>A different way to explore.</h2><p>3D rendering is unavailable in this browser. The timeline, landmark map, and source-linked history remain fully accessible.</p><Minimap large landmarks={LANDMARKS} year={era.year} selectedId={selectedId} onSelect={focusPlace} onNavigate={navigateAnywhere} /></div>}
           {geographic && mapError && <div className="map-error-panel" role="alert"><strong>Map data could not be loaded.</strong><p>{mapError}</p><button className="quiet-button" onClick={() => { setMapError(''); setMapReload((old) => old + 1) }}>Retry map</button><button className="quiet-button" onClick={() => switchGeography(false)}>Use illustrated reconstruction</button></div>}
         </div>
 
+        {audioTour.state.phase === 'travelling' && <div key={audioTour.state.visit?.requestId} className="tour-scene-title" aria-live="polite"><span className="eyebrow">{audioTour.stopData.year} · A chapter in the city</span><strong>{audioTour.stopData.title}</strong><p>{audioTour.stopData.subtitle}</p></div>}
         <div className="map-caption"><span className="live-dot" />{geographic ? activeLayer === 'streets' ? 'LATEST MAPPED CITY · LIVE DATA' : `${satellite?.date ?? era.year} · SATELLITE RECORD` : sceneStatus === 'unavailable' ? '2D FIELD GUIDE' : 'INTERPRETIVE 3D ATLAS'}<span>{mapView ? `${mapView.center[1].toFixed(3)}° N / ${mapView.center[0].toFixed(3)}° E` : '17.4° N / 78.5° E'}</span></div>
 
         <button className="mobile-story-button quiet-button" onClick={() => setMobilePanel(!mobilePanel)} aria-expanded={mobilePanel}><Icon name="book" />{mobilePanel ? 'Close chapter' : `${era.year} · Read this chapter`}</button>
@@ -412,8 +463,8 @@ export default function App() {
 
         <div className="scene-toolbar">
           <div className="tool-group" aria-label="Camera navigation">
-            <button className={cameraMode === 'orbit' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'orbit'} onClick={() => setCameraMode('orbit')}><Icon name="orbit" />{satelliteMap ? 'Map view' : 'Orbit'}</button>
-            <button className={cameraMode === 'walk' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'walk'} disabled={satelliteMap} title={satelliteMap ? '30 m satellite imagery is an overview, not a street-level view' : undefined} onClick={() => setCameraMode('walk')}><Icon name="walk" />{geographic ? 'Close-up' : 'Street view'}</button>
+            <button className={cameraMode === 'orbit' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'orbit'} onClick={() => { audioTour.pauseForExploration(); setCameraMode('orbit') }}><Icon name="orbit" />{satelliteMap ? 'Map view' : 'Orbit'}</button>
+            <button className={cameraMode === 'walk' ? 'tool-button active' : 'tool-button'} aria-pressed={cameraMode === 'walk'} disabled={satelliteMap} title={satelliteMap ? '30 m satellite imagery is an overview, not a street-level view' : undefined} onClick={() => { audioTour.pauseForExploration(); setCameraMode('walk') }}><Icon name="walk" />{geographic ? 'Close-up' : 'Street view'}</button>
           </div>
           <button className="tool-button layers-toggle" aria-expanded={layersOpen} onClick={() => setLayersOpen(!layersOpen)}><Icon name="layers" />Layers</button>
           {layersOpen && <div className="layers-panel">
@@ -426,7 +477,7 @@ export default function App() {
           </div>}
         </div>
 
-        {selected && <div className={`field-note-panel ${noteCollapsed ? 'is-collapsed' : ''}`}>{landmarkCard(selected)}</div>}
+        {selected && !['playing', 'travelling'].includes(audioTour.state.phase) && <div className={`field-note-panel ${noteCollapsed ? 'is-collapsed' : ''}`}>{landmarkCard(selected)}</div>}
         {cameraMode === 'walk' && activeDistrict && !destination && <div className="district-hud"><span className="eyebrow">{era.year} · {geographic ? 'CITY CLOSE-UP' : 'ON THE STREET'}</span><strong>{activeDistrict.name}</strong><span>{geographic ? 'Geographic map · not street-level photography' : 'Reconstructed lanes · drag to look · WASD to move'}</span></div>}
         {destination && !selected && <div className="destination-hud"><span className="eyebrow">EXPLORE ANYWHERE</span><strong>{destinationLabel}</strong><small>{destination[1].toFixed(5)}° N, {destination[0].toFixed(5)}° E</small><button className="text-button" onClick={() => setCityMapOpen(true)}>Choose another location →</button></div>}
         {expeditionStarted && !selected && tourIndex === null && <div className="expedition-hud" aria-label="Expedition tracker">
@@ -462,9 +513,11 @@ export default function App() {
         </div>}
       </main>
 
+      <AudioTourPlayer tour={audioTour} />
+
       <section className="timeline" aria-label="Historical timeline">
         <div className="timeline-heading"><span className="eyebrow">MOVE THROUGH TIME</span><span>1518 — 2025 <b>/</b> Eight windows into a changing city</span><div className="timeline-arrows"><button aria-label="Previous era" disabled={eraIndex === 0} onClick={() => changeEra(eraIndex - 1)}>←</button><button aria-label="Next era" disabled={eraIndex === ERAS.length - 1} onClick={() => changeEra(eraIndex + 1)}>→</button></div></div>
-        <div className="era-track">{ERAS.map((item, index) => <button key={item.year} className={index === eraIndex ? 'era-stop active' : 'era-stop'} onClick={() => changeEra(index)} aria-pressed={eraIndex === index} aria-label={`${item.year}: ${item.label}`}><span className="era-track-line" /><span className="era-dot" /><strong>{item.year}</strong><small>{item.label}</small></button>)}</div>
+        <div className="era-track" ref={eraTrack}>{ERAS.map((item, index) => <button key={item.year} className={index === eraIndex ? 'era-stop active' : 'era-stop'} onClick={() => changeEra(index)} aria-pressed={eraIndex === index} aria-label={`${item.year}: ${item.label}`}><span className="era-track-line" /><span className="era-dot" /><strong>{item.year}</strong><small>{item.label}</small></button>)}</div>
       </section>
 
       <div className="notification" role="status">{notice && <><span>{notice}</span><button aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></>}</div>
